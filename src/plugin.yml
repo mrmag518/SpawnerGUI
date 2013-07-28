@@ -1,0 +1,10 @@
+author: mrmag518
+main: com.mrmag518.SpawnerGUI.SpawnerGUI
+version: '1.0'
+name: SpawnerGUI
+description: "Simple & easy spawner modification GUI."
+permissions:
+  spawnergui.open:
+    default: op
+  spawnergui.edit.*:
+    default: op
