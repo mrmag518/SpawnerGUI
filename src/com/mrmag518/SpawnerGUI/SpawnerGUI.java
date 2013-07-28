@@ -10,28 +10,23 @@ import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class SpawnerGUI extends JavaPlugin {
+public class SpawnerGUI extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
-        Logger.getLogger("Minecraft").log(Level.INFO, "[SpawnerGUI] Version {0} disabled.", getVersion());
+        Logger.getLogger("Minecraft").log(Level.INFO, "[SpawnerGUI] Version {0} disabled.", getDescription().getVersion());
     }
     
     @Override
     public void onEnable() {
-        EventListener listener = new EventListener(this);
-        Logger.getLogger("Minecraft").log(Level.INFO, "[SpawnerGUI] Version {0} enabled.", getVersion());
-    }
-    
-    public String getVersion() {
-        PluginDescriptionFile pdffile = getDescription();
-        return pdffile.getVersion().replace("v", "");
+        getServer().getPluginManager().registerEvents(this, this);
+        Logger.getLogger("Minecraft").log(Level.INFO, "[SpawnerGUI] Version {0} enabled.", getDescription().getVersion());
     }
     
     public void openGUI(final CreatureSpawner spawner, final Player p) {
@@ -48,22 +43,18 @@ public class SpawnerGUI extends JavaPlugin {
                 for(int i = 0; i < EntityType.values().length; i++) {
                     EntityType e = EntityType.values()[i];
                     
-                    if(e.isAlive()) {
-                        if(clicked.equalsIgnoreCase(e.getName().toLowerCase())) {
-                            p.playSound(p.getLocation(), Sound.CLICK, 1, 1);
-                            
-                            if(p.hasPermission("spawnergui.edit.*") || p.hasPermission("spawner.edit." + clicked)) {
-                                spawner.setSpawnedType(e);
-                                spawner.update();
-                                break;
-                            } else {
-                                p.sendMessage(ChatColor.RED + "You are not allowed to change to that type!");
-                                return;
-                            }
+                    if(e.isAlive() && clicked.equalsIgnoreCase(e.getName().toLowerCase())) {
+                        p.playSound(p.getLocation(), Sound.CLICK, 1, 1);
+
+                        if(p.hasPermission("spawnergui.edit.*") || p.hasPermission("spawner.edit." + clicked)) {
+                            spawner.setSpawnedType(e);
+                            spawner.update(true);
+                            p.sendMessage("§9Spawner type changed from §7" + type.getName().toLowerCase() + " §9to §7" + clicked + "§9!");
+                            return;
                         }
+                        p.sendMessage(ChatColor.RED + "You are not allowed to change to that type!");
                     }
                 }
-                p.sendMessage("§9Spawner type changed from §7" + type.getName().toLowerCase() + " §9to §7" + clicked + "§9!");
             }
         }, this, true);
         int j = 0;
@@ -71,15 +62,11 @@ public class SpawnerGUI extends JavaPlugin {
         for(int i = 0; i < EntityType.values().length; i++) {
             EntityType e = EntityType.values()[i];
             
-            if(e.isAlive()) {
-                if(j < 36) {
-                    // Random null egg appearing in GUI for some reason.
-                    if(e.getTypeId() == -1) {
-                        continue;
-                    }
-                    gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: ", "§a" + e.getName());
-                    j++;
-                }
+            if(e.isAlive() && j < 36) {
+                if(e.getTypeId() == -1) continue; // Prevent random null egg from appearing in the GUI.
+                
+                gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName());
+                j++;
             }
         }
         gui.open(p);
@@ -89,27 +76,18 @@ public class SpawnerGUI extends JavaPlugin {
         return new ItemStack(383, 1, type.getTypeId());
     }
     
-    public class EventListener implements Listener {
-        public SpawnerGUI plugin;
-        public EventListener(SpawnerGUI instance) {
-            plugin = instance;
-            plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        }
-        
-        @EventHandler
-        public void handleInteract(PlayerInteractEvent event) {
-            if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                Block b = event.getClickedBlock();
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void handleInteract(PlayerInteractEvent event) {
+        if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+            Block b = event.getClickedBlock();
+            
+            if(b != null && b.getTypeId() == 52) {
+                Player p = event.getPlayer();
                 
-                if(b.getTypeId() == 52) {
-                    Player p = event.getPlayer();
-                    
-                    if(p.hasPermission("spawnergui.open")) {
-                        if(!p.isSneaking()) {
-                            event.setCancelled(true);
-                            CreatureSpawner spawner = (CreatureSpawner)b.getState();
-                            plugin.openGUI(spawner, p);
-                        }
+                if(p.hasPermission("spawnergui.open")) {
+                    if(!p.isSneaking()) {
+                        event.setCancelled(true);
+                        openGUI((CreatureSpawner)b.getState(), p);
                     }
                 }
             }
