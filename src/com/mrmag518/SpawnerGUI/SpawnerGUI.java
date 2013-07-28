@@ -46,7 +46,7 @@ public class SpawnerGUI extends JavaPlugin implements Listener {
                     if(e.isAlive() && clicked.equalsIgnoreCase(e.getName().toLowerCase())) {
                         p.playSound(p.getLocation(), Sound.CLICK, 1, 1);
 
-                        if(p.hasPermission("spawnergui.edit.*") || p.hasPermission("spawner.edit." + clicked)) {
+                        if(p.hasPermission("spawnergui.edit.*") || p.hasPermission("spawnergui.edit." + clicked)) {
                             spawner.setSpawnedType(e);
                             spawner.update(true);
                             p.sendMessage("§9Spawner type changed from §7" + type.getName().toLowerCase() + " §9to §7" + clicked + "§9!");
