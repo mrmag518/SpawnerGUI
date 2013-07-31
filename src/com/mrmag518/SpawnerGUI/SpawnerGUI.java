@@ -1,11 +1,12 @@
 package com.mrmag518.SpawnerGUI;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.milkbowl.vault.economy.Economy;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
@@ -22,11 +23,17 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class SpawnerGUI extends JavaPlugin implements Listener {
-    public boolean ecoEnabled = false;
-    public Economy eco;
+    private boolean ecoEnabled = false;
+    private Economy eco;
+    public Set<String> openGUIs = new HashSet<String>();
     
     @Override
     public void onDisable() {
+        for(Player p : getServer().getOnlinePlayers()) {
+            if(openGUIs.contains(p.getName())) {
+                p.closeInventory();
+            }
+        }
         Logger.getLogger("Minecraft").log(Level.INFO, "[SpawnerGUI] Version {0} disabled.", getDescription().getVersion());
     }
     
@@ -35,7 +42,7 @@ public class SpawnerGUI extends JavaPlugin implements Listener {
         loadConfig();
         ecoEnabled = getServer().getPluginManager().getPlugin("Vault") != null;
         if(ecoEnabled) {
-            RegisteredServiceProvider<Economy> rsp = Bukkit.getServicesManager().getRegistration(Economy.class);
+            RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
             if(rsp == null) {
                 eco = null;
                 ecoEnabled = false;
@@ -99,7 +106,7 @@ public class SpawnerGUI extends JavaPlugin implements Listener {
                             p.sendMessage("§9Spawner type changed from §7" + type.getName().toLowerCase() + " §9to §7" + clicked + "§9!");
                             return;
                         }
-                        p.sendMessage(ChatColor.RED + "You are not allowed to change to that type!");
+                        p.sendMessage("§cYou are not allowed to change to that type!");
                         break;
                     }
                 }
@@ -110,14 +117,13 @@ public class SpawnerGUI extends JavaPlugin implements Listener {
         for(int i = 0; i < EntityType.values().length; i++) {
             EntityType e = EntityType.values()[i];
             
-            if(e.isAlive() && j < 36) {
-                if(e.getTypeId() == -1) continue; // Prevent random null egg from appearing in the GUI.
-                
+            if(e.isAlive() && j < 36 && e.getTypeId() != -1) {
                 gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName());
                 j++;
             }
         }
         gui.open(p);
+        openGUIs.add(p.getName());
     }
     
     private ItemStack getSpawnEgg(EntityType type) {

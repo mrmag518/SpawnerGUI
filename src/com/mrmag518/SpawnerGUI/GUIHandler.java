@@ -13,18 +13,17 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.plugin.Plugin;
 
 public class GUIHandler implements Listener {
     private String name;
     private int size;
     private OptionClickEventHandler handler;
-    private Plugin plugin;
+    private SpawnerGUI plugin = null;
     private String[] optionNames;
     private ItemStack[] optionIcons;
     private boolean autoDestoryOnClose;
     
-    public GUIHandler(String name, int size, OptionClickEventHandler handler, Plugin plugin, boolean autoDestoryOnClose) {
+    public GUIHandler(String name, int size, OptionClickEventHandler handler, final SpawnerGUI plugin, boolean autoDestoryOnClose) {
         this.name = name;
         this.size = size;
         this.handler = handler;
@@ -61,10 +60,11 @@ public class GUIHandler implements Listener {
  
     @EventHandler(priority = EventPriority.MONITOR)
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (event.getInventory().getTitle().equals(name)) {
+        if(event.getInventory().getTitle().equals(name)) {
             if(autoDestoryOnClose) {
                 destroy();
             }
+            if(plugin != null) plugin.openGUIs.remove(event.getPlayer().getName());
         }
     }
  
