@@ -4,8 +4,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.Bukkit;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
@@ -36,8 +36,10 @@ public class SpawnerGUI extends JavaPlugin implements Listener {
         ecoEnabled = getServer().getPluginManager().getPlugin("Vault") != null;
         if(ecoEnabled) {
             RegisteredServiceProvider<Economy> rsp = Bukkit.getServicesManager().getRegistration(Economy.class);
-            if (rsp == null) {
+            if(rsp == null) {
                 eco = null;
+                ecoEnabled = false;
+                Logger.getLogger("Minecraft").log(Level.WARNING, "[SpawnerGUI] Found no Vault supported economy plugin! Disabled economy support.");
             }
             eco = rsp.getProvider();
         }
