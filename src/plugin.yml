@@ -1,10 +1,13 @@
 author: mrmag518
 main: com.mrmag518.SpawnerGUI.SpawnerGUI
-version: '1.1'
+version: '1.2'
 name: SpawnerGUI
 description: "Simple & easy spawner modification GUI."
+softdepend: [Vault]
 permissions:
   spawnergui.open:
     default: op
   spawnergui.edit.*:
+    default: op
+  spawnergui.eco.bypass.*:
     default: op
