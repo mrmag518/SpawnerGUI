@@ -42,7 +42,7 @@ public class GUIHandler implements Listener {
     
     public void open(Player player) {
         Inventory inventory = Bukkit.createInventory(player, size, name);
-        for (int i = 0; i < optionIcons.length; i++) {
+        for(int i = 0; i < optionIcons.length; i++) {
             if (optionIcons != null) {
                 inventory.setItem(i, optionIcons[i]);
             }
@@ -73,10 +73,12 @@ public class GUIHandler implements Listener {
         if(event.getInventory().getTitle().equals(name)) {
             event.setCancelled(true);
             int slot = event.getRawSlot();
-            if (slot >= 0 && slot < size && optionNames[slot] != null) {
+            
+            if(slot >= 0 && slot < size && optionNames[slot] != null) {
                 OptionClickEvent e = new OptionClickEvent((Player) event.getWhoClicked(), slot, optionNames[slot]);
                 handler.onOptionClick(e);
-                if (e.willClose()) {
+                
+                if(e.willClose()) {
                     final Player p = (Player) event.getWhoClicked();
                     Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                         @Override
@@ -85,7 +87,8 @@ public class GUIHandler implements Listener {
                         }
                     }, 1);
                 }
-                if (e.willDestroy()) {
+                
+                if(e.willDestroy()) {
                     destroy();
                 }
             }

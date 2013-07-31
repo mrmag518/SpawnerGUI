@@ -44,7 +44,7 @@ public class SpawnerGUI extends JavaPlugin implements Listener {
         if(ecoEnabled) {
             RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
             if(rsp == null) {
-                eco = null;
+                eco = null; 
                 ecoEnabled = false;
                 Logger.getLogger("Minecraft").log(Level.WARNING, "[SpawnerGUI] Found no Vault supported economy plugin! Disabled economy support.");
             }
@@ -75,8 +75,6 @@ public class SpawnerGUI extends JavaPlugin implements Listener {
         GUIHandler gui;
         
         gui = new GUIHandler("Spawner Type: " + type.getName(), 36, new GUIHandler.OptionClickEventHandler() {
-            double cost;
-            
             @Override
             public void onOptionClick(GUIHandler.OptionClickEvent event) {
                 event.setWillClose(true);
@@ -91,7 +89,7 @@ public class SpawnerGUI extends JavaPlugin implements Listener {
 
                         if(p.hasPermission("spawnergui.edit.*") || p.hasPermission("spawnergui.edit." + clicked)) {
                             if(ecoEnabled && !p.hasPermission("spawnergui.eco.bypass.*")) {
-                                cost = (p.hasPermission("spawnergui.eco.bypass." + clicked)) ? 0 : getPrice(e);
+                                double cost = (p.hasPermission("spawnergui.eco.bypass." + clicked)) ? 0 : getPrice(e);
                                 
                                 if(cost > 0.0) {
                                     if(!eco.has(p.getName(), cost)) {
@@ -134,16 +132,11 @@ public class SpawnerGUI extends JavaPlugin implements Listener {
     public void handleInteract(PlayerInteractEvent event) {
         if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             Block b = event.getClickedBlock();
+            Player p = event.getPlayer();
             
-            if(b != null && b.getTypeId() == 52) {
-                Player p = event.getPlayer();
-                
-                if(p.hasPermission("spawnergui.open")) {
-                    if(!p.isSneaking()) {
-                        event.setCancelled(true);
-                        openGUI((CreatureSpawner)b.getState(), p);
-                    }
-                }
+            if(b != null && b.getTypeId() == 52 && p.hasPermission("spawnergui.open") && !p.isSneaking()) {
+                event.setCancelled(true);
+                openGUI((CreatureSpawner)b.getState(), p);
             }
         }
     }
