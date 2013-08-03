@@ -88,12 +88,12 @@ public class SpawnerGUI extends JavaPlugin {
                             if(ecoEnabled && !p.hasPermission("spawnergui.eco.bypass.*")) {
                                 double cost = (p.hasPermission("spawnergui.eco.bypass." + clicked)) ? 0 : getPrice(e);
                                 
-                                if(cost > 0.0) {
-                                    if(!eco.has(p.getName(), cost)) {
-                                        p.sendMessage("§cYou need at least §7" + cost + " §cin currency to do this!");
-                                        return;
-                                    }
+                                if(cost > 0.0 && eco.has(p.getName(), cost)) {
+                                    p.sendMessage("§7Charged §f" + cost + " §7of your balance.");
                                     eco.withdrawPlayer(p.getName(), cost);
+                                } else {
+                                    p.sendMessage("§cYou need at least §7" + cost + " §cmoney to do this!");
+                                    return;
                                 }
                             }
                             spawner.setSpawnedType(e);
