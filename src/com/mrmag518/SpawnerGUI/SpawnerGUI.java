@@ -57,6 +57,7 @@ public class SpawnerGUI extends JavaPlugin {
     private void loadConfig() {
         if(!getDataFolder().exists()) getDataFolder().mkdir();
         
+        getConfig().addDefault("Settings.SneakToOpen", true);
         for(EntityType e : EntityType.values()) {
             if(e.isAlive() && e.getTypeId() != -1) {
                 getConfig().addDefault("Mobs." + e.getName(), 0.0);
@@ -64,10 +65,6 @@ public class SpawnerGUI extends JavaPlugin {
         }
         getConfig().options().copyDefaults(true);
         saveConfig();
-    }
-    
-    public double getPrice(EntityType type) {
-        return getConfig().getDouble("Mobs." + type.getName());
     }
     
     public void openGUI(final CreatureSpawner spawner, final Player p) {
@@ -128,6 +125,10 @@ public class SpawnerGUI extends JavaPlugin {
         return new ItemStack(383, 1, type.getTypeId());
     }
     
+    public double getPrice(EntityType type) {
+        return getConfig().getDouble("Mobs." + type.getName());
+    }
+    
     public class Handler implements Listener {
         @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
         public void handleInteract(PlayerInteractEvent event) {
@@ -135,9 +136,14 @@ public class SpawnerGUI extends JavaPlugin {
                 Block b = event.getClickedBlock();
                 Player p = event.getPlayer();
                 
-                if(b != null && b.getTypeId() == 52 && p.hasPermission("spawnergui.open") && !p.isSneaking()) {
-                    event.setCancelled(true);
-                    openGUI((CreatureSpawner)b.getState(), p);
+                if(b != null && b.getTypeId() == 52 && p.hasPermission("spawnergui.open")) {
+                    if(getConfig().getBoolean("Settings.SneakToOpen") && p.isSneaking()) {
+                        event.setCancelled(true);
+                        openGUI((CreatureSpawner)b.getState(), p);
+                    } else if(getConfig().getBoolean("Settings.SneakToOpen") == false && !p.isSneaking()) {
+                        event.setCancelled(true);
+                        openGUI((CreatureSpawner)b.getState(), p);
+                    }
                 }
             }
         }
