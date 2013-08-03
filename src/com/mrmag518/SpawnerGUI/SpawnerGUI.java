@@ -22,7 +22,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class SpawnerGUI extends JavaPlugin implements Listener {
+public class SpawnerGUI extends JavaPlugin {
     private boolean ecoEnabled = false;
     private Economy eco;
     public Set<String> openGUIs = new HashSet<String>();
@@ -50,7 +50,7 @@ public class SpawnerGUI extends JavaPlugin implements Listener {
             }
             eco = rsp.getProvider();
         }
-        getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(new Handler(), this);
         Logger.getLogger("Minecraft").log(Level.INFO, "[SpawnerGUI] Version {0} enabled.", getDescription().getVersion());
     }
     
@@ -128,15 +128,17 @@ public class SpawnerGUI extends JavaPlugin implements Listener {
         return new ItemStack(383, 1, type.getTypeId());
     }
     
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void handleInteract(PlayerInteractEvent event) {
-        if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            Block b = event.getClickedBlock();
-            Player p = event.getPlayer();
-            
-            if(b != null && b.getTypeId() == 52 && p.hasPermission("spawnergui.open") && !p.isSneaking()) {
-                event.setCancelled(true);
-                openGUI((CreatureSpawner)b.getState(), p);
+    public class Handler implements Listener {
+        @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+        public void handleInteract(PlayerInteractEvent event) {
+            if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                Block b = event.getClickedBlock();
+                Player p = event.getPlayer();
+                
+                if(b != null && b.getTypeId() == 52 && p.hasPermission("spawnergui.open") && !p.isSneaking()) {
+                    event.setCancelled(true);
+                    openGUI((CreatureSpawner)b.getState(), p);
+                }
             }
         }
     }
