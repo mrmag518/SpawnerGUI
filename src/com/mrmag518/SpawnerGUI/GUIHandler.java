@@ -18,16 +18,16 @@ public class GUIHandler implements Listener {
     private String name;
     private int size;
     private OptionClickEventHandler handler;
-    private SpawnerGUI plugin = null;
+    private SpawnerGUI plugin;
     private String[] optionNames;
     private ItemStack[] optionIcons;
     private boolean autoDestoryOnClose;
     
-    public GUIHandler(String name, int size, OptionClickEventHandler handler, final SpawnerGUI plugin, boolean autoDestoryOnClose) {
+    public GUIHandler(String name, int size, OptionClickEventHandler handler, SpawnerGUI instance, boolean autoDestoryOnClose) {
         this.name = name;
         this.size = size;
         this.handler = handler;
-        this.plugin = plugin;
+        this.plugin = instance;
         this.optionNames = new String[size];
         this.optionIcons = new ItemStack[size];
         this.autoDestoryOnClose = autoDestoryOnClose;
@@ -64,7 +64,12 @@ public class GUIHandler implements Listener {
             if(autoDestoryOnClose) {
                 destroy();
             }
-            if(plugin != null) plugin.openGUIs.remove(event.getPlayer().getName());
+            
+            if(plugin != null) {
+                if(plugin.openGUIs.contains(event.getPlayer().getName())) {
+                    plugin.openGUIs.remove(event.getPlayer().getName());
+                }
+            }
         }
     }
  

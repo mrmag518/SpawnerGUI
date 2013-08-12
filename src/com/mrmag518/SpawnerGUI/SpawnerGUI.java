@@ -57,7 +57,7 @@ public class SpawnerGUI extends JavaPlugin {
     private void loadConfig() {
         if(!getDataFolder().exists()) getDataFolder().mkdir();
         
-        getConfig().addDefault("Settings.SneakToOpen", true);
+        getConfig().addDefault("Settings.SneakToOpen", false);
         for(EntityType e : EntityType.values()) {
             if(e.isAlive() && e.getTypeId() != -1) {
                 getConfig().addDefault("Mobs." + e.getName(), 0.0);
@@ -86,7 +86,7 @@ public class SpawnerGUI extends JavaPlugin {
 
                         if(p.hasPermission("spawnergui.edit.*") || p.hasPermission("spawnergui.edit." + clicked)) {
                             if(ecoEnabled && !p.hasPermission("spawnergui.eco.bypass.*")) {
-                                double cost = (p.hasPermission("spawnergui.eco.bypass." + clicked)) ? 0 : getPrice(e);
+                                double cost = p.hasPermission("spawnergui.eco.bypass." + clicked) ? 0 : getPrice(e);
                                 
                                 if(cost > 0.0 && eco.has(p.getName(), cost)) {
                                     p.sendMessage("§7Charged §f" + cost + " §7of your balance.");
