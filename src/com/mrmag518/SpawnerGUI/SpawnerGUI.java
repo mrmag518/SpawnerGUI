@@ -59,6 +59,7 @@ public class SpawnerGUI extends JavaPlugin {
         if(!getDataFolder().exists()) getDataFolder().mkdir();
         
         getConfig().addDefault("Settings.SneakToOpen", false);
+        getConfig().addDefault("Settings.RemoveEggsIfNoPerm", false);
         for(EntityType e : EntityType.values()) {
             if(e.isAlive() && e.getTypeId() != -1) {
                 getConfig().addDefault("Mobs." + e.getName(), 0.0);
@@ -114,6 +115,10 @@ public class SpawnerGUI extends JavaPlugin {
             EntityType e = EntityType.values()[i];
             
             if(e.isAlive() && j < 36 && e.getTypeId() != -1) {
+                if(getConfig().getBoolean("Settings.RemoveEggsIfNoPerm") && !p.hasPermission("spawnergui.edit." + e.getName().toLowerCase())) {
+                    continue;
+                }
+                
                 if(ecoEnabled) {
                     if(getPrice(e) > 0.0) {
                         gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §a" + getPrice(e));
