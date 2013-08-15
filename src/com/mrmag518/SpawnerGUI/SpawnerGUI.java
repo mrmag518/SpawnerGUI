@@ -59,7 +59,9 @@ public class SpawnerGUI extends JavaPlugin {
         if(!getDataFolder().exists()) getDataFolder().mkdir();
         
         getConfig().addDefault("Settings.SneakToOpen", false);
-        getConfig().addDefault("Settings.RemoveEggsIfNoPerm", false);
+        getConfig().addDefault("Settings.RemoveNoAccessEggs", false);
+        getConfig().addDefault("Settings.ShowAccessInLore", true);
+        getConfig().addDefault("Settings.ShowCostInLore", true);
         for(EntityType e : EntityType.values()) {
             if(e.isAlive() && e.getTypeId() != -1) {
                 getConfig().addDefault("Mobs." + e.getName(), 0.0);
@@ -115,18 +117,36 @@ public class SpawnerGUI extends JavaPlugin {
             EntityType e = EntityType.values()[i];
             
             if(e.isAlive() && j < 36 && e.getTypeId() != -1) {
-                if(getConfig().getBoolean("Settings.RemoveEggsIfNoPerm") && !p.hasPermission("spawnergui.edit." + e.getName().toLowerCase())) {
+                if(getConfig().getBoolean("Settings.RemoveNoAccessEggs") && !p.hasPermission("spawnergui.edit." + e.getName().toLowerCase())) {
                     continue;
                 }
                 
-                if(ecoEnabled) {
+                if(ecoEnabled && getConfig().getBoolean("Settings.ShowCostInLore")) {
                     if(getPrice(e) > 0.0) {
-                        gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §a" + getPrice(e));
+                        if(getConfig().getBoolean("Settings.ShowAccessInLore") && !p.hasPermission("spawnergui.edit." + e.getName().toLowerCase())) {
+                            gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §a" + getPrice(e), "§7Access: §cNo");
+                        } else if(getConfig().getBoolean("Settings.ShowAccessInLore") && p.hasPermission("spawnergui.edit." + e.getName().toLowerCase())) {
+                            gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §a" + getPrice(e), "§7Access: §aYes");
+                        } else {
+                            gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §a" + getPrice(e));
+                        }
                     } else {
-                        gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §aFree");
+                        if(getConfig().getBoolean("Settings.ShowAccessInLore") && !p.hasPermission("spawnergui.edit." + e.getName().toLowerCase())) {
+                            gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §aFree", "§7Access: §cNo");
+                        } else if(getConfig().getBoolean("Settings.ShowAccessInLore") && p.hasPermission("spawnergui.edit." + e.getName().toLowerCase())) {
+                            gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §aFree", "§7Access: §aYes");
+                        } else {
+                            gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §aFree");
+                        }
                     }
                 } else {
-                    gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName());
+                    if(getConfig().getBoolean("Settings.ShowAccessInLore") && !p.hasPermission("spawnergui.edit." + e.getName().toLowerCase())) {
+                        gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Access: §cNo");
+                    } else if(getConfig().getBoolean("Settings.ShowAccessInLore") && p.hasPermission("spawnergui.edit." + e.getName().toLowerCase())) {
+                        gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Access: §aYes");
+                    } else {
+                        gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName());
+                    }
                 }
                 j++;
             }
