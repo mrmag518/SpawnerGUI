@@ -117,32 +117,34 @@ public class SpawnerGUI extends JavaPlugin {
             EntityType e = EntityType.values()[i];
             
             if(e.isAlive() && j < 36 && e.getTypeId() != -1) {
-                if(getConfig().getBoolean("Settings.RemoveNoAccessEggs") && !p.hasPermission("spawnergui.edit." + e.getName().toLowerCase())) {
+                String name = e.getName().toLowerCase();
+                
+                if(getConfig().getBoolean("Settings.RemoveNoAccessEggs") && !p.hasPermission("spawnergui.edit." + name)) {
                     continue;
                 }
                 
                 if(ecoEnabled && getConfig().getBoolean("Settings.ShowCostInLore")) {
-                    if(getPrice(e) > 0.0) {
-                        if(getConfig().getBoolean("Settings.ShowAccessInLore") && !p.hasPermission("spawnergui.edit." + e.getName().toLowerCase())) {
+                    if(getPrice(e) > 0.0 && !p.hasPermission("spawnergui.eco.bypass." + name) && !p.hasPermission("spawnergui.eco.bypass.*")) {
+                        if(getConfig().getBoolean("Settings.ShowAccessInLore") && !p.hasPermission("spawnergui.edit." + name)) {
                             gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §a" + getPrice(e), "§7Access: §cNo");
-                        } else if(getConfig().getBoolean("Settings.ShowAccessInLore") && p.hasPermission("spawnergui.edit." + e.getName().toLowerCase())) {
+                        } else if(getConfig().getBoolean("Settings.ShowAccessInLore") && p.hasPermission("spawnergui.edit." + name)) {
                             gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §a" + getPrice(e), "§7Access: §aYes");
                         } else {
                             gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §a" + getPrice(e));
                         }
                     } else {
-                        if(getConfig().getBoolean("Settings.ShowAccessInLore") && !p.hasPermission("spawnergui.edit." + e.getName().toLowerCase())) {
+                        if(getConfig().getBoolean("Settings.ShowAccessInLore") && !p.hasPermission("spawnergui.edit." + name)) {
                             gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §aFree", "§7Access: §cNo");
-                        } else if(getConfig().getBoolean("Settings.ShowAccessInLore") && p.hasPermission("spawnergui.edit." + e.getName().toLowerCase())) {
+                        } else if(getConfig().getBoolean("Settings.ShowAccessInLore") && p.hasPermission("spawnergui.edit." + name)) {
                             gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §aFree", "§7Access: §aYes");
                         } else {
                             gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §aFree");
                         }
                     }
                 } else {
-                    if(getConfig().getBoolean("Settings.ShowAccessInLore") && !p.hasPermission("spawnergui.edit." + e.getName().toLowerCase())) {
+                    if(getConfig().getBoolean("Settings.ShowAccessInLore") && !p.hasPermission("spawnergui.edit." + name)) {
                         gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Access: §cNo");
-                    } else if(getConfig().getBoolean("Settings.ShowAccessInLore") && p.hasPermission("spawnergui.edit." + e.getName().toLowerCase())) {
+                    } else if(getConfig().getBoolean("Settings.ShowAccessInLore") && p.hasPermission("spawnergui.edit." + name)) {
                         gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Access: §aYes");
                     } else {
                         gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName());
