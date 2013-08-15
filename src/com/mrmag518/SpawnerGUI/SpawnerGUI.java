@@ -41,6 +41,7 @@ public class SpawnerGUI extends JavaPlugin {
     public void onEnable() {
         loadConfig();
         ecoEnabled = getServer().getPluginManager().getPlugin("Vault") != null;
+        
         if(ecoEnabled) {
             RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
             if(rsp == null) {
@@ -113,7 +114,15 @@ public class SpawnerGUI extends JavaPlugin {
             EntityType e = EntityType.values()[i];
             
             if(e.isAlive() && j < 36 && e.getTypeId() != -1) {
-                gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName());
+                if(ecoEnabled) {
+                    if(getPrice(e) > 0.0) {
+                        gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §a" + getPrice(e));
+                    } else {
+                        gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName(), "§7Cost: §aFree");
+                    }
+                } else {
+                    gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), "§7Set spawner type to: §a" + e.getName());
+                }
                 j++;
             }
         }
