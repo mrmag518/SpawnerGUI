@@ -88,11 +88,11 @@ public class SpawnerGUI extends JavaPlugin {
                     if(e.isAlive() && clicked.equalsIgnoreCase(e.getName().toLowerCase())) {
                         p.playSound(p.getLocation(), Sound.CLICK, 1, 1);
 
-                        if(p.hasPermission("spawnergui.edit.*") || p.hasPermission("spawnergui.edit." + clicked)) {
+                        if(!noAccess(p, e)) {
                             if(ecoEnabled && !p.hasPermission("spawnergui.eco.bypass.*")) {
                                 double cost = p.hasPermission("spawnergui.eco.bypass." + clicked) ? 0 : getPrice(e);
                                 
-                                if(cost > 0.0 && eco.has(p.getName(), cost)) {
+                                if(cost >= 0.0 && eco.has(p.getName(), cost)) {
                                     p.sendMessage("§7Charged §f" + cost + " §7of your balance.");
                                     eco.withdrawPlayer(p.getName(), cost);
                                 } else {
@@ -118,11 +118,11 @@ public class SpawnerGUI extends JavaPlugin {
             
             if(e.isAlive() && j < 36 && e.getTypeId() != -1) {
                 String name = e.getName().toLowerCase();
-                if(getConfig().getBoolean("Settings.RemoveNoAccessEggs") && !p.hasPermission("spawnergui.edit." + name)) continue;
+                if(getConfig().getBoolean("Settings.RemoveNoAccessEggs") && noAccess(p, e)) continue;
                 
                 String defLore = "§7Set spawner type to: §a" + e.getName();
                 String cost = (getPrice(e) > 0.0 && !p.hasPermission("spawnergui.eco.bypass." + name) && !p.hasPermission("spawnergui.eco.bypass.*")) ? "§a" + getPrice(e) : "§aFree";
-                String access = (!p.hasPermission("spawnergui.edit." + name) && !p.hasPermission("spawnergui.edit.*")) ? "§7Access: §cNo" : "§7Access: §aYes";
+                String access = noAccess(p, e) ? "§7Access: §cNo" : "§7Access: §aYes";
                 
                 if(ecoEnabled && getConfig().getBoolean("Settings.ShowCostInLore")) {
                     if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
@@ -150,6 +150,10 @@ public class SpawnerGUI extends JavaPlugin {
     
     public double getPrice(EntityType type) {
         return getConfig().getDouble("Mobs." + type.getName());
+    }
+    
+    public boolean noAccess(Player p, EntityType type) {
+        return p.hasPermission("spawnergui.disallow.*") || p.hasPermission("spawnergui.disallow." + type.getName().toLowerCase());
     }
     
     public class Handler implements Listener {
