@@ -153,7 +153,7 @@ public class SpawnerGUI extends JavaPlugin {
     }
     
     public boolean noAccess(Player p, EntityType type) {
-        return p.hasPermission("spawnergui.disallow.*") || p.hasPermission("spawnergui.disallow." + type.getName().toLowerCase());
+        return !p.hasPermission("spawnergui.edit.*") && !p.hasPermission("spawnergui.edit." + type.getName().toLowerCase());
     }
     
     public class Handler implements Listener {

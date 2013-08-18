@@ -9,5 +9,5 @@ permissions:
     default: op
   spawnergui.eco.bypass.*:
     default: op
-  spawnergui.disallow.*:
+  spawnergui.edit.*:
     default: false
