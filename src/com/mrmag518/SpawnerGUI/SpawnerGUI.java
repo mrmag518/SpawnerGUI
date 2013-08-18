@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import net.milkbowl.vault.economy.Economy;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Effect;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
@@ -62,6 +63,7 @@ public class SpawnerGUI extends JavaPlugin {
         getConfig().addDefault("Settings.RemoveNoAccessEggs", false);
         getConfig().addDefault("Settings.ShowAccessInLore", true);
         getConfig().addDefault("Settings.ShowCostInLore", true);
+        getConfig().addDefault("Settings.ShowBalanceIcon", true);
         for(EntityType e : EntityType.values()) {
             if(e.isAlive() && e.getTypeId() != -1) {
                 getConfig().addDefault("Mobs." + e.getName(), 0.0);
@@ -81,6 +83,11 @@ public class SpawnerGUI extends JavaPlugin {
                 event.setWillClose(true);
                 String clicked = event.getName().toLowerCase();
                 clicked = ChatColor.stripColor(clicked);
+                
+                if(clicked.equalsIgnoreCase("balance")) {
+                    event.setWillClose(false); 
+                    return;
+                }
                 
                 for(int i = 0; i < EntityType.values().length; i++) {
                     EntityType e = EntityType.values()[i];
@@ -140,6 +147,15 @@ public class SpawnerGUI extends JavaPlugin {
                 j++;
             }
         }
+        
+        if(getConfig().getBoolean("Settings.ShowBalanceIcon")) {
+            if(ecoEnabled) {
+                gui.setOption(35, new ItemStack(397, 1, (byte)3), "§bBalance", "§aYour Balance: §e" + Math.round(eco.getBalance(p.getName()) * 100.0) / 100.0);
+            } else {
+                gui.setOption(35, new ItemStack(397, 1, (byte)3), "§bBalance", "§cEconomy not enabled!");
+            }
+        }
+        
         gui.open(p);
         openGUIs.add(p.getName());
     }
