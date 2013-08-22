@@ -79,6 +79,11 @@ public class SpawnerGUI extends JavaPlugin {
             @Override
             public void onOptionClick(GUIHandler.OptionClickEvent event) {
                 event.setWillClose(true);
+                
+                if(spawner.getBlock().getTypeId() != 52) {
+                    p.sendMessage("§cCancelled any changes as the spawner you were about to modify is no longer valid! (§7" + spawner.getBlock().getType() + "§c)");
+                    return;
+                }
                 String clicked = event.getName().toLowerCase();
                 clicked = ChatColor.stripColor(clicked);
                 
@@ -105,14 +110,9 @@ public class SpawnerGUI extends JavaPlugin {
                                     return;
                                 }
                             }
-                            
-                            if(spawner.getBlock().getTypeId() == 52) {
-                                spawner.setSpawnedType(e);
-                                spawner.update(true);
-                                p.sendMessage("§9Spawner type changed from §7" + type.getName().toLowerCase() + " §9to §7" + clicked + "§9!");
-                            } else {
-                                p.sendMessage("§cAborted change as the spawner you were about to modify is no longer valid! (§7" + spawner.getBlock().getType() + "§c)");
-                            }
+                            spawner.setSpawnedType(e);
+                            spawner.update(true);
+                            p.sendMessage("§9Spawner type changed from §7" + type.getName().toLowerCase() + " §9to §7" + clicked + "§9!");
                             return;
                         }
                         p.sendMessage("§cYou are not allowed to change to that type!");
