@@ -8,7 +8,6 @@ import java.util.logging.Logger;
 import net.milkbowl.vault.economy.Economy;
 
 import org.bukkit.ChatColor;
-import org.bukkit.Effect;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
@@ -25,7 +24,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class SpawnerGUI extends JavaPlugin {
     private boolean ecoEnabled = false;
-    private Economy eco;
+    private Economy eco = null;
     public Set<String> openGUIs = new HashSet<String>();
     
     @Override
@@ -45,12 +44,11 @@ public class SpawnerGUI extends JavaPlugin {
         
         if(ecoEnabled) {
             RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
-            if(rsp == null) {
-                eco = null; 
-                ecoEnabled = false;
+            if(rsp != null) {
+                eco = rsp.getProvider();
+            } else {
                 Logger.getLogger("Minecraft").log(Level.WARNING, "[SpawnerGUI] Found no Vault supported economy plugin! Disabled economy support.");
             }
-            eco = rsp.getProvider();
         }
         getServer().getPluginManager().registerEvents(new Handler(), this);
         Logger.getLogger("Minecraft").log(Level.INFO, "[SpawnerGUI] Version {0} enabled.", getDescription().getVersion());
@@ -103,13 +101,18 @@ public class SpawnerGUI extends JavaPlugin {
                                     p.sendMessage("§7Charged §f" + cost + " §7of your balance.");
                                     eco.withdrawPlayer(p.getName(), cost);
                                 } else {
-                                    p.sendMessage("§cYou need at least §7" + cost + " §cmoney to do this!");
+                                    p.sendMessage("§cYou need at least §7" + cost + " §cin balance to do this!");
                                     return;
                                 }
                             }
-                            spawner.setSpawnedType(e);
-                            spawner.update(true);
-                            p.sendMessage("§9Spawner type changed from §7" + type.getName().toLowerCase() + " §9to §7" + clicked + "§9!");
+                            
+                            if(spawner.getBlock().getTypeId() == 52) {
+                                spawner.setSpawnedType(e);
+                                spawner.update(true);
+                                p.sendMessage("§9Spawner type changed from §7" + type.getName().toLowerCase() + " §9to §7" + clicked + "§9!");
+                            } else {
+                                p.sendMessage("§cAborted change as the spawner you were about to modify is no longer valid! (§7" + spawner.getBlock().getType() + "§c)");
+                            }
                             return;
                         }
                         p.sendMessage("§cYou are not allowed to change to that type!");
