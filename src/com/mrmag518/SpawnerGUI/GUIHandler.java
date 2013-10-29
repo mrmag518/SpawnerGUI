@@ -64,8 +64,8 @@ public class GUIHandler implements Listener {
                 destroy();
             }
             
-            if(plugin.openGUIs.contains(event.getPlayer().getName())) {
-                plugin.openGUIs.remove(event.getPlayer().getName());
+            if(SpawnerGUI.openGUIs.contains(event.getPlayer().getName())) {
+                SpawnerGUI.openGUIs.remove(event.getPlayer().getName());
             }
         }
     }

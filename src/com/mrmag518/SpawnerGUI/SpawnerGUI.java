@@ -26,7 +26,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class SpawnerGUI extends JavaPlugin {
     private boolean ecoEnabled = false;
     private Economy eco = null;
-    public Set<String> openGUIs = new HashSet<String>();
+    public static final Set<String> openGUIs = new HashSet<String>();
     
     @Override
     public void onDisable() {
@@ -63,6 +63,7 @@ public class SpawnerGUI extends JavaPlugin {
         getConfig().addDefault("Settings.ShowAccessInLore", true);
         getConfig().addDefault("Settings.ShowCostInLore", true);
         getConfig().addDefault("Settings.ShowBalanceIcon", true);
+        
         for(Spawnable e : Spawnable.values()) {
             getConfig().addDefault("Mobs." + e.getName(), 0.0);
         }
@@ -72,15 +73,14 @@ public class SpawnerGUI extends JavaPlugin {
     
     public void openGUI(final CreatureSpawner spawner, final Player p) {
         final Spawnable type = toSpawnable(spawner.getSpawnedType());
-        GUIHandler gui;
         
-        gui = new GUIHandler("Spawner Type: " + type.getName(), 36, new GUIHandler.OptionClickEventHandler() {
+        GUIHandler gui = new GUIHandler("Spawner Type: " + type.getName(), 36, new GUIHandler.OptionClickEventHandler() {
             @Override
             public void onOptionClick(GUIHandler.OptionClickEvent event) {
                 event.setWillClose(true);
                 
                 if(spawner.getBlock().getType() != Material.MOB_SPAWNER) {
-                    p.sendMessage("§cCancelled any changes as the spawner you were about to modify is no longer valid! (§7" + spawner.getBlock().getType() + "§c)");
+                    p.sendMessage("§cCancelled any changes as the spawner block you were about to modify is no longer valid! (§7" + spawner.getBlock().getType().name().toLowerCase() + "§c)");
                     return;
                 }
                 String clicked = event.getName().toLowerCase();
@@ -88,32 +88,31 @@ public class SpawnerGUI extends JavaPlugin {
                 
                 if(clicked.equalsIgnoreCase("balance")) {
                     event.setWillClose(false); 
-                    return;
-                }
-                
-                for(Spawnable e : Spawnable.values()) {
-                    if(clicked.equalsIgnoreCase(e.getName().toLowerCase())) {
-                        p.playSound(p.getLocation(), Sound.CLICK, 1, 1);
+                } else {
+                    for(Spawnable e : Spawnable.values()) {
+                        if(clicked.equalsIgnoreCase(e.getName().toLowerCase())) {
+                            p.playSound(p.getLocation(), Sound.CLICK, 1, 1);
 
-                        if(!noAccess(p, e)) {
-                            if(ecoEnabled && !p.hasPermission("spawnergui.eco.bypass.*")) {
-                                double cost = p.hasPermission("spawnergui.eco.bypass." + clicked) ? 0 : getPrice(e);
-                                
-                                if(cost >= 0.0 && eco.has(p.getName(), cost)) {
-                                    p.sendMessage("§7Charged §f" + cost + " §7of your balance.");
-                                    eco.withdrawPlayer(p.getName(), cost);
-                                } else {
-                                    p.sendMessage("§cYou need at least §7" + cost + " §cin balance to do this!");
-                                    return;
+                            if(!noAccess(p, e)) {
+                                if(ecoEnabled && !p.hasPermission("spawnergui.eco.bypass.*")) {
+                                    double cost = p.hasPermission("spawnergui.eco.bypass." + clicked) ? 0 : getPrice(e);
+
+                                    if(cost >= 0.0 && eco.has(p.getName(), cost)) {
+                                        p.sendMessage("§7Charged §f" + cost + " §7of your balance.");
+                                        eco.withdrawPlayer(p.getName(), cost);
+                                    } else {
+                                        p.sendMessage("§cYou need at least §7" + cost + " §cin balance to do this!");
+                                        return;
+                                    }
                                 }
+                                spawner.setSpawnedType(e.getType());
+                                spawner.update(true);
+                                p.sendMessage("§9Spawner type changed from §7" + type.getName().toLowerCase() + " §9to §7" + clicked + "§9!");
+                                return;
                             }
-                            spawner.setSpawnedType(e.getType());
-                            spawner.update(true);
-                            p.sendMessage("§9Spawner type changed from §7" + type.getName().toLowerCase() + " §9to §7" + clicked + "§9!");
-                            return;
+                            p.sendMessage("§cYou are not allowed to change to that type!");
+                            break;
                         }
-                        p.sendMessage("§cYou are not allowed to change to that type!");
-                        break;
                     }
                 }
             }
@@ -122,24 +121,23 @@ public class SpawnerGUI extends JavaPlugin {
         
         for(Spawnable e : Spawnable.values()) {
             if(j < 36) {
-                String name = e.name().toLowerCase();
                 if(getConfig().getBoolean("Settings.RemoveNoAccessEggs") && noAccess(p, e)) continue;
                 
-                String defLore = "§7Set spawner type to: §a" + e.name();
-                String cost = (getPrice(e) > 0.0 && !p.hasPermission("spawnergui.eco.bypass." + name) && !p.hasPermission("spawnergui.eco.bypass.*")) ? "§a" + getPrice(e) : "§aFree";
+                String defLore = "§7Set spawner type to: §a" + e.getName();
+                String cost = (getPrice(e) > 0.0 && !p.hasPermission("spawnergui.eco.bypass." + e.getName().toLowerCase()) && !p.hasPermission("spawnergui.eco.bypass.*")) ? "§a" + getPrice(e) : "§aFree";
                 String access = noAccess(p, e) ? "§7Access: §cNo" : "§7Access: §aYes";
                 
                 if(ecoEnabled && getConfig().getBoolean("Settings.ShowCostInLore")) {
                     if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
-                        gui.setOption(j, e.getSpawnEgg(), "§6" + e.name(), defLore, "§7Cost: " + cost, access);
+                        gui.setOption(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, "§7Cost: " + cost, access);
                     } else {
-                        gui.setOption(j, e.getSpawnEgg(), "§6" + e.name(), defLore, "§7Cost: " + cost);
+                        gui.setOption(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, "§7Cost: " + cost);
                     }
                 } else {
                     if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
-                        gui.setOption(j, e.getSpawnEgg(), "§6" + e.name(), defLore, access);
+                        gui.setOption(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, access);
                     } else {
-                        gui.setOption(j, e.getSpawnEgg(), "§6" + e.name(), defLore);
+                        gui.setOption(j, e.getSpawnEgg(), "§6" + e.getName(), defLore);
                     }
                 }
                 j++;
@@ -203,7 +201,7 @@ public class SpawnerGUI extends JavaPlugin {
         ZOMBIE(EntityType.ZOMBIE, "Zombie", (byte)54),
         SLIME(EntityType.SLIME, "Slime", (byte)55),
         GHAST(EntityType.GHAST, "Ghast", (byte)56),
-        PIG_ZOMBIE(EntityType.PIG_ZOMBIE, "ZombiePigman", (byte)57),
+        PIG_ZOMBIE(EntityType.PIG_ZOMBIE, "PigZombie", (byte)57),
         ENDERMAN(EntityType.ENDERMAN, "Enderman", (byte)58),
         CAVE_SPIDER(EntityType.CAVE_SPIDER, "CaveSpider", (byte)59),
         SILVERFISH(EntityType.SILVERFISH, "Silverfish", (byte)60),
@@ -249,7 +247,7 @@ public class SpawnerGUI extends JavaPlugin {
         }
         
         public ItemStack getSpawnEgg() {
-            return new ItemStack(Material.MONSTER_EGG, 1, getData());
+            return new ItemStack(Material.MONSTER_EGG, 1, data);
         }
     }
 }
