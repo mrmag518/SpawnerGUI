@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import net.milkbowl.vault.economy.Economy;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
@@ -62,17 +63,15 @@ public class SpawnerGUI extends JavaPlugin {
         getConfig().addDefault("Settings.ShowAccessInLore", true);
         getConfig().addDefault("Settings.ShowCostInLore", true);
         getConfig().addDefault("Settings.ShowBalanceIcon", true);
-        for(EntityType e : EntityType.values()) {
-            if(e.isAlive() && e.getTypeId() != -1) {
-                getConfig().addDefault("Mobs." + e.getName(), 0.0);
-            }
+        for(Spawnable e : Spawnable.values()) {
+            getConfig().addDefault("Mobs." + e.getName(), 0.0);
         }
         getConfig().options().copyDefaults(true);
         saveConfig();
     }
     
     public void openGUI(final CreatureSpawner spawner, final Player p) {
-        final EntityType type = spawner.getSpawnedType();
+        final Spawnable type = toSpawnable(spawner.getSpawnedType());
         GUIHandler gui;
         
         gui = new GUIHandler("Spawner Type: " + type.getName(), 36, new GUIHandler.OptionClickEventHandler() {
@@ -80,7 +79,7 @@ public class SpawnerGUI extends JavaPlugin {
             public void onOptionClick(GUIHandler.OptionClickEvent event) {
                 event.setWillClose(true);
                 
-                if(spawner.getBlock().getTypeId() != 52) {
+                if(spawner.getBlock().getType() != Material.MOB_SPAWNER) {
                     p.sendMessage("§cCancelled any changes as the spawner you were about to modify is no longer valid! (§7" + spawner.getBlock().getType() + "§c)");
                     return;
                 }
@@ -92,10 +91,8 @@ public class SpawnerGUI extends JavaPlugin {
                     return;
                 }
                 
-                for(int i = 0; i < EntityType.values().length; i++) {
-                    EntityType e = EntityType.values()[i];
-                    
-                    if(e.isAlive() && clicked.equalsIgnoreCase(e.getName().toLowerCase())) {
+                for(Spawnable e : Spawnable.values()) {
+                    if(clicked.equalsIgnoreCase(e.getName().toLowerCase())) {
                         p.playSound(p.getLocation(), Sound.CLICK, 1, 1);
 
                         if(!noAccess(p, e)) {
@@ -110,7 +107,7 @@ public class SpawnerGUI extends JavaPlugin {
                                     return;
                                 }
                             }
-                            spawner.setSpawnedType(e);
+                            spawner.setSpawnedType(e.getType());
                             spawner.update(true);
                             p.sendMessage("§9Spawner type changed from §7" + type.getName().toLowerCase() + " §9to §7" + clicked + "§9!");
                             return;
@@ -120,31 +117,29 @@ public class SpawnerGUI extends JavaPlugin {
                     }
                 }
             }
-        }, this, true);
+        }, true);
         int j = 0;
         
-        for(int i = 0; i < EntityType.values().length; i++) {
-            EntityType e = EntityType.values()[i];
-            
-            if(e.isAlive() && j < 36 && e.getTypeId() != -1) {
-                String name = e.getName().toLowerCase();
+        for(Spawnable e : Spawnable.values()) {
+            if(j < 36) {
+                String name = e.name().toLowerCase();
                 if(getConfig().getBoolean("Settings.RemoveNoAccessEggs") && noAccess(p, e)) continue;
                 
-                String defLore = "§7Set spawner type to: §a" + e.getName();
+                String defLore = "§7Set spawner type to: §a" + e.name();
                 String cost = (getPrice(e) > 0.0 && !p.hasPermission("spawnergui.eco.bypass." + name) && !p.hasPermission("spawnergui.eco.bypass.*")) ? "§a" + getPrice(e) : "§aFree";
                 String access = noAccess(p, e) ? "§7Access: §cNo" : "§7Access: §aYes";
                 
                 if(ecoEnabled && getConfig().getBoolean("Settings.ShowCostInLore")) {
                     if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
-                        gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), defLore, "§7Cost: " + cost, access);
+                        gui.setOption(j, e.getSpawnEgg(), "§6" + e.name(), defLore, "§7Cost: " + cost, access);
                     } else {
-                        gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), defLore, "§7Cost: " + cost);
+                        gui.setOption(j, e.getSpawnEgg(), "§6" + e.name(), defLore, "§7Cost: " + cost);
                     }
                 } else {
                     if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
-                        gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), defLore, access);
+                        gui.setOption(j, e.getSpawnEgg(), "§6" + e.name(), defLore, access);
                     } else {
-                        gui.setOption(j, getSpawnEgg(e), "§6" + e.getName(), defLore);
+                        gui.setOption(j, e.getSpawnEgg(), "§6" + e.name(), defLore);
                     }
                 }
                 j++;
@@ -153,9 +148,9 @@ public class SpawnerGUI extends JavaPlugin {
         
         if(getConfig().getBoolean("Settings.ShowBalanceIcon")) {
             if(ecoEnabled) {
-                gui.setOption(35, new ItemStack(397, 1, (byte)3), "§bBalance", "§aYour Balance: §e" + Math.round(eco.getBalance(p.getName()) * 100.0) / 100.0);
+                gui.setOption(35, new ItemStack(Material.SKULL_ITEM, 1, (byte)3), "§bBalance", "§aYour Balance: §e" + Math.round(eco.getBalance(p.getName()) * 100.0) / 100.0);
             } else {
-                gui.setOption(35, new ItemStack(397, 1, (byte)3), "§bBalance", "§cEconomy not enabled!");
+                gui.setOption(35, new ItemStack(Material.SKULL_ITEM, 1, (byte)3), "§bBalance", "§cEconomy not enabled!");
             }
         }
         
@@ -163,16 +158,21 @@ public class SpawnerGUI extends JavaPlugin {
         openGUIs.add(p.getName());
     }
     
-    private ItemStack getSpawnEgg(EntityType type) {
-        return new ItemStack(383, 1, type.getTypeId());
+    public double getPrice(Spawnable type) {
+        return getConfig().getDouble("Mobs." + type.name());
     }
     
-    public double getPrice(EntityType type) {
-        return getConfig().getDouble("Mobs." + type.getName());
-    }
-    
-    public boolean noAccess(Player p, EntityType type) {
+    public boolean noAccess(Player p, Spawnable type) {
         return !p.hasPermission("spawnergui.edit.*") && !p.hasPermission("spawnergui.edit." + type.getName().toLowerCase());
+    }
+    
+    public static Spawnable toSpawnable(EntityType type) {
+        for(Spawnable e : Spawnable.values()) {
+            if(e.getType() == type) {
+                return e;
+            }
+        }
+        return null;
     }
     
     public class Handler implements Listener {
@@ -182,7 +182,7 @@ public class SpawnerGUI extends JavaPlugin {
                 Block b = event.getClickedBlock();
                 Player p = event.getPlayer();
                 
-                if(b != null && b.getTypeId() == 52 && p.hasPermission("spawnergui.open")) {
+                if(b != null && b.getType() == Material.MOB_SPAWNER && p.hasPermission("spawnergui.open")) {
                     if(getConfig().getBoolean("Settings.SneakToOpen") && p.isSneaking()) {
                         event.setCancelled(true);
                         openGUI((CreatureSpawner)b.getState(), p);
@@ -192,6 +192,64 @@ public class SpawnerGUI extends JavaPlugin {
                     }
                 }
             }
+        }
+    }
+    
+    public enum Spawnable {
+        CREEPER(EntityType.CREEPER, "Creeper", (byte)50),
+        SKELETON(EntityType.SKELETON, "Skeleton", (byte)51),
+        SPIDER(EntityType.SPIDER, "Spider", (byte)52),
+        GIANT(EntityType.GIANT, "Giant", (byte)53),
+        ZOMBIE(EntityType.ZOMBIE, "Zombie", (byte)54),
+        SLIME(EntityType.SLIME, "Slime", (byte)55),
+        GHAST(EntityType.GHAST, "Ghast", (byte)56),
+        PIG_ZOMBIE(EntityType.PIG_ZOMBIE, "ZombiePigman", (byte)57),
+        ENDERMAN(EntityType.ENDERMAN, "Enderman", (byte)58),
+        CAVE_SPIDER(EntityType.CAVE_SPIDER, "CaveSpider", (byte)59),
+        SILVERFISH(EntityType.SILVERFISH, "Silverfish", (byte)60),
+        BLAZE(EntityType.BLAZE, "Blaze", (byte)61),
+        MAGMA_CUBE(EntityType.MAGMA_CUBE, "MagmaCube", (byte)62),
+        ENDER_DRAGON(EntityType.ENDER_DRAGON, "EnderDragon", (byte)63),
+        WITHER(EntityType.WITHER, "Wither", (byte)64),
+        BAT(EntityType.BAT, "Bat", (byte)65),
+        WITCH(EntityType.WITCH, "Witch", (byte)66),
+        PIG(EntityType.PIG, "Pig", (byte)90),
+        SHEEP(EntityType.SHEEP, "Sheep", (byte)91),
+        COW(EntityType.COW, "Cow", (byte)92),
+        CHICKEN(EntityType.CHICKEN, "Chicken", (byte)93),
+        SQUID(EntityType.SQUID, "Squid", (byte)94),
+        WOLF(EntityType.WOLF, "Wolf", (byte)95),
+        MUSHROOM_COW(EntityType.MUSHROOM_COW, "Mooshroom", (byte)96),
+        SNOWMAN(EntityType.SNOWMAN, "SnowGolem", (byte)97),
+        OCELOT(EntityType.OCELOT, "Ocelot", (byte)98),
+        IRON_GOLEM(EntityType.IRON_GOLEM, "IronGolem", (byte)99),
+        HORSE(EntityType.HORSE, "Horse", (byte)100),
+        VILLAGER(EntityType.VILLAGER, "Villager", (byte)120);
+        
+        private final EntityType type;
+        private final String name;
+        private final byte data;
+        
+        private Spawnable(EntityType type, String name, byte data) {
+            this.type = type;
+            this.name = name;
+            this.data = data;
+        }
+        
+        public String getName() {
+            return name;
+        }
+        
+        public byte getData() {
+            return data;
+        }
+        
+        public EntityType getType() {
+            return type;
+        }
+        
+        public ItemStack getSpawnEgg() {
+            return new ItemStack(Material.MONSTER_EGG, 1, getData());
         }
     }
 }
