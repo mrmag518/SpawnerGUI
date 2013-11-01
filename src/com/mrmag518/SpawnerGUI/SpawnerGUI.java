@@ -83,8 +83,7 @@ public class SpawnerGUI extends JavaPlugin {
                     p.sendMessage("§cCancelled any changes as the spawner block you were about to modify is no longer valid! (§7" + spawner.getBlock().getType().name().toLowerCase() + "§c)");
                     return;
                 }
-                String clicked = event.getName().toLowerCase();
-                clicked = ChatColor.stripColor(clicked);
+                String clicked = ChatColor.stripColor(event.getName().toLowerCase());
                 
                 if(clicked.equalsIgnoreCase("balance")) {
                     event.setWillClose(false); 
@@ -145,11 +144,8 @@ public class SpawnerGUI extends JavaPlugin {
         }
         
         if(getConfig().getBoolean("Settings.ShowBalanceIcon")) {
-            if(ecoEnabled) {
-                gui.setOption(35, new ItemStack(Material.SKULL_ITEM, 1, (byte)3), "§bBalance", "§aYour Balance: §e" + Math.round(eco.getBalance(p.getName()) * 100.0) / 100.0);
-            } else {
-                gui.setOption(35, new ItemStack(Material.SKULL_ITEM, 1, (byte)3), "§bBalance", "§cEconomy not enabled!");
-            }
+            String s = ecoEnabled ? "§aYour Balance: §e" + Math.round(eco.getBalance(p.getName()) * 100.0) / 100.0 : "§cEconomy not enabled!";
+            gui.setOption(35, new ItemStack(Material.SKULL_ITEM, 1, (byte)3), "§bBalance", s);
         }
         
         gui.open(p);
