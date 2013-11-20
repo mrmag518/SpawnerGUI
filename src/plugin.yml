@@ -15,3 +15,5 @@ permissions:
     default: op
   spawnergui.edit.*:
     default: false
+  spawnergui.command.reload:
+    default: op

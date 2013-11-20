@@ -157,7 +157,7 @@ public class SpawnerGUI extends JavaPlugin {
     }
     
     public double getPrice(Spawnable type) {
-        return getConfig().getDouble("Mobs." + type.name());
+        return getConfig().getDouble("Mobs." + type.getName());
     }
     
     public boolean noAccess(Player p, Spawnable type) {
