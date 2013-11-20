@@ -12,6 +12,8 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -169,6 +171,25 @@ public class SpawnerGUI extends JavaPlugin {
             }
         }
         return null;
+    }
+    
+    @Override
+    public boolean onCommand(final CommandSender sender, Command cmd, String commandLabel, String[] args) {
+        if(cmd.getName().equalsIgnoreCase("spawnergui")) {
+            if(sender instanceof Player) {
+                if(sender.hasPermission("spawnergui.command.reload")) {
+                    reloadConfig();
+                    sender.sendMessage("§aConfiguration file reloaded.");
+                } else {
+                    sender.sendMessage("§cYou do not have permission to do this!");
+                }
+            } else {
+                reloadConfig();
+                sender.sendMessage("Configuration file reloaded.");
+            }
+            return true;
+        }
+        return false;
     }
     
     public class Handler implements Listener {
