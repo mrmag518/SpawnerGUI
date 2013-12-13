@@ -5,18 +5,17 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 public class GUIClickEvent extends Event {
     private final static HandlerList handlers = new HandlerList();
     private final int slot;
-    private final Inventory inv;
     private final Player player;
     private final CreatureSpawner spawner;
     private boolean willClose = true;
     
-    public GUIClickEvent(int slot, Inventory inv, Player player, CreatureSpawner spawner) {
+    public GUIClickEvent(int slot, Player player, CreatureSpawner spawner) {
         this.slot = slot;
-        this.inv = inv;
         this.player = player;
         this.spawner = spawner;
     }
@@ -24,17 +23,17 @@ public class GUIClickEvent extends Event {
     public int getSlot() {
         return slot;
     }
-
-    public Inventory getInventory() {
-        return inv;
-    }
-
+    
     public Player getPlayer() {
         return player;
     }
     
     public CreatureSpawner getSpawner() {
         return spawner;
+    }
+    
+    public ItemStack getItem() {
+        return player.getOpenInventory().getTopInventory().getItem(slot);
     }
     
     public boolean willClose() {

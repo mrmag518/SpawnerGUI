@@ -17,14 +17,12 @@ import org.bukkit.inventory.meta.ItemMeta;
 public class GUIHandler implements Listener {
     private String name;
     private final int size;
-    private Player player;
     private ItemStack[] items;
     private CreatureSpawner spawner;
     
-    public GUIHandler(Player player, String name, int size, CreatureSpawner spawner) {
+    public GUIHandler(String name, int size, CreatureSpawner spawner) {
         this.name = name;
         this.size = size;
-        this.player = player;
         this.items = new ItemStack[size];
         this.spawner = spawner;
         Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("SpawnerGUI"));
@@ -38,7 +36,7 @@ public class GUIHandler implements Listener {
         items[position] = icon;
     }
     
-    public void open() {
+    public void open(Player player) {
         Inventory inv = Bukkit.createInventory(player, size, name);
         
         for(int i = 0; i < items.length; i++) {
@@ -49,12 +47,10 @@ public class GUIHandler implements Listener {
     
     @EventHandler
     public void handleClick(InventoryClickEvent event) {
-        Inventory inv = event.getInventory();
-        
-        if(inv.getName().equals(name)) {
+        if(event.getInventory().getName().equals(name)) {
             event.setCancelled(true);
             int slot = event.getSlot();
-            GUIClickEvent e = new GUIClickEvent(slot, inv, player, spawner);
+            GUIClickEvent e = new GUIClickEvent(slot, (Player)event.getWhoClicked(), spawner);
             Bukkit.getPluginManager().callEvent(e);
             
             if(e.willClose()) {
@@ -79,7 +75,6 @@ public class GUIHandler implements Listener {
     private void eat() {
         this.items = null;
         this.name = null;
-        this.player = null;
         this.spawner = null;
         HandlerList.unregisterAll(this);
     }

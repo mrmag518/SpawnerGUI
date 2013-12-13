@@ -75,7 +75,7 @@ public class SpawnerGUI extends JavaPlugin {
     
     public void openGUI(CreatureSpawner spawner, Player p) {
         Spawnable type = toSpawnable(spawner.getSpawnedType());
-        GUIHandler gui = new GUIHandler(p, "Spawner Type: " + type.getName(), 36, spawner);
+        GUIHandler gui = new GUIHandler("Spawner Type: " + type.getName(), 36, spawner);
         int j = 0;
         
         for(Spawnable e : Spawnable.values()) {
@@ -107,7 +107,7 @@ public class SpawnerGUI extends JavaPlugin {
             String s = ecoEnabled ? "§aYour Balance: §e" + Math.round(eco.getBalance(p.getName()) * 100.0) / 100.0 : "§cEconomy not enabled!";
             gui.setItem(35, new ItemStack(Material.SKULL_ITEM, 1, (byte)3), "§bBalance", s);
         }
-        gui.open();
+        gui.open(p);
         openGUIs.add(p.getName());
     }
     
@@ -175,7 +175,7 @@ public class SpawnerGUI extends JavaPlugin {
                 p.sendMessage("§cThe spawner block is no longer valid! (§7" + spawner.getBlock().getType().name().toLowerCase() + "§c)");
                 return;
             }
-            String clicked = ChatColor.stripColor(event.getInventory().getItem(event.getSlot()).getItemMeta().getDisplayName().toLowerCase());
+            String clicked = ChatColor.stripColor(event.getItem().getItemMeta().getDisplayName().toLowerCase());
             Spawnable current = toSpawnable(spawner.getSpawnedType());
 
             if(clicked.equalsIgnoreCase("balance")) {
