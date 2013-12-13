@@ -73,53 +73,9 @@ public class SpawnerGUI extends JavaPlugin {
         saveConfig();
     }
     
-    public void openGUI(final CreatureSpawner spawner, final Player p) {
-        final Spawnable type = toSpawnable(spawner.getSpawnedType());
-        
-        GUIHandler gui = new GUIHandler("Spawner Type: " + type.getName(), 36, new GUIHandler.OptionClickEventHandler() {
-            @Override
-            public void onOptionClick(GUIHandler.OptionClickEvent event) {
-                event.setWillClose(true);
-                
-                if(spawner.getBlock().getType() != Material.MOB_SPAWNER) {
-                    p.sendMessage("§cCancelled any changes as the spawner block you were about to modify is no longer valid! (§7" + spawner.getBlock().getType().name().toLowerCase() + "§c)");
-                    return;
-                }
-                String clicked = ChatColor.stripColor(event.getName().toLowerCase());
-                
-                if(clicked.equalsIgnoreCase("balance")) {
-                    event.setWillClose(false); 
-                } else {
-                    for(Spawnable e : Spawnable.values()) {
-                        if(clicked.equalsIgnoreCase(e.getName().toLowerCase())) {
-                            p.playSound(p.getLocation(), Sound.CLICK, 1, 1);
-
-                            if(!noAccess(p, e)) {
-                                if(ecoEnabled && !p.hasPermission("spawnergui.eco.bypass.*")) {
-                                    double cost = p.hasPermission("spawnergui.eco.bypass." + clicked) ? 0.0 : getPrice(e);
-                                    
-                                    if(cost > 0.0) {
-                                        if(eco.has(p.getName(), cost)) {
-                                            p.sendMessage("§7Charged §f" + cost + " §7of your balance.");
-                                            eco.withdrawPlayer(p.getName(), cost);
-                                        } else {
-                                            p.sendMessage("§cYou need at least §7" + cost + " §cin balance to do this!");
-                                            return;
-                                        }
-                                    }
-                                }
-                                spawner.setSpawnedType(e.getType());
-                                spawner.update(true);
-                                p.sendMessage("§9Spawner type changed from §7" + type.getName().toLowerCase() + " §9to §7" + clicked + "§9!");
-                                return;
-                            }
-                            p.sendMessage("§cYou are not allowed to change to that type!");
-                            break;
-                        }
-                    }
-                }
-            }
-        }, true);
+    public void openGUI(CreatureSpawner spawner, Player p) {
+        Spawnable type = toSpawnable(spawner.getSpawnedType());
+        GUIHandler gui = new GUIHandler(p, "Spawner Type: " + type.getName(), 36, spawner);
         int j = 0;
         
         for(Spawnable e : Spawnable.values()) {
@@ -132,15 +88,15 @@ public class SpawnerGUI extends JavaPlugin {
                 
                 if(ecoEnabled && getConfig().getBoolean("Settings.ShowCostInLore")) {
                     if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
-                        gui.setOption(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, "§7Cost: " + cost, access);
+                        gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, "§7Cost: " + cost, access);
                     } else {
-                        gui.setOption(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, "§7Cost: " + cost);
+                        gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, "§7Cost: " + cost);
                     }
                 } else {
                     if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
-                        gui.setOption(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, access);
+                        gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, access);
                     } else {
-                        gui.setOption(j, e.getSpawnEgg(), "§6" + e.getName(), defLore);
+                        gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore);
                     }
                 }
                 j++;
@@ -149,10 +105,9 @@ public class SpawnerGUI extends JavaPlugin {
         
         if(getConfig().getBoolean("Settings.ShowBalanceIcon")) {
             String s = ecoEnabled ? "§aYour Balance: §e" + Math.round(eco.getBalance(p.getName()) * 100.0) / 100.0 : "§cEconomy not enabled!";
-            gui.setOption(35, new ItemStack(Material.SKULL_ITEM, 1, (byte)3), "§bBalance", s);
+            gui.setItem(35, new ItemStack(Material.SKULL_ITEM, 1, (byte)3), "§bBalance", s);
         }
-        
-        gui.open(p);
+        gui.open();
         openGUIs.add(p.getName());
     }
     
@@ -206,6 +161,51 @@ public class SpawnerGUI extends JavaPlugin {
                     } else if(getConfig().getBoolean("Settings.SneakToOpen") == false && !p.isSneaking()) {
                         event.setCancelled(true);
                         openGUI((CreatureSpawner)b.getState(), p);
+                    }
+                }
+            }
+        }
+        
+        @EventHandler
+        public void handleClick(GUIClickEvent event) {
+            Player p = event.getPlayer();
+            CreatureSpawner spawner = event.getSpawner();
+            
+            if(spawner.getBlock().getType() != Material.MOB_SPAWNER) {
+                p.sendMessage("§cThe spawner block is no longer valid! (§7" + spawner.getBlock().getType().name().toLowerCase() + "§c)");
+                return;
+            }
+            String clicked = ChatColor.stripColor(event.getInventory().getItem(event.getSlot()).getItemMeta().getDisplayName().toLowerCase());
+            Spawnable current = toSpawnable(spawner.getSpawnedType());
+
+            if(clicked.equalsIgnoreCase("balance")) {
+                event.setWillClose(false);
+            } else {
+                for(Spawnable e : Spawnable.values()) {
+                    if(clicked.equalsIgnoreCase(e.getName().toLowerCase())) {
+                        p.playSound(p.getLocation(), Sound.CLICK, 1, 1);
+
+                        if(!noAccess(p, e)) {
+                            if(ecoEnabled && !p.hasPermission("spawnergui.eco.bypass.*")) {
+                                double cost = p.hasPermission("spawnergui.eco.bypass." + clicked) ? 0.0 : getPrice(e);
+
+                                if(cost > 0.0) {
+                                    if(eco.has(p.getName(), cost)) {
+                                        p.sendMessage("§7Charged §f" + cost + " §7of your balance.");
+                                        eco.withdrawPlayer(p.getName(), cost);
+                                    } else {
+                                        p.sendMessage("§cYou need at least §7" + cost + " §cin balance to do this!");
+                                        return;
+                                    }
+                                }
+                            }
+                            spawner.setSpawnedType(e.getType());
+                            spawner.update(true);
+                            p.sendMessage("§9Spawner type changed from §7" + current.getName().toLowerCase() + " §9to §7" + clicked + "§9!");
+                            return;
+                        }
+                        p.sendMessage("§cYou are not allowed to change to that type!");
+                        break;
                     }
                 }
             }
