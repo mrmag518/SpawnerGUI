@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.milkbowl.vault.economy.Economy;
+import org.bukkit.Bukkit;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -26,15 +27,14 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class SpawnerGUI extends JavaPlugin {
-    private boolean ecoEnabled = false;
     private Economy eco = null;
     public static final Set<String> openGUIs = new HashSet<String>();
     
     @Override
     public void onDisable() {
-        for(Player p : getServer().getOnlinePlayers()) {
-            if(openGUIs.contains(p.getName())) {
-                p.closeInventory();
+        for(String s : openGUIs) {
+            if(Bukkit.getOfflinePlayer(s).isOnline()) {
+                Bukkit.getPlayerExact(s).getOpenInventory().close();
             }
         }
         Logger.getLogger("Minecraft").log(Level.INFO, "[SpawnerGUI] Version {0} disabled.", getDescription().getVersion());
@@ -43,9 +43,8 @@ public class SpawnerGUI extends JavaPlugin {
     @Override
     public void onEnable() {
         loadConfig();
-        ecoEnabled = getServer().getPluginManager().getPlugin("Vault") != null;
         
-        if(ecoEnabled) {
+        if(getServer().getPluginManager().getPlugin("Vault") != null) {
             RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
             if(rsp != null) {
                 eco = rsp.getProvider();
@@ -66,8 +65,15 @@ public class SpawnerGUI extends JavaPlugin {
         getConfig().addDefault("Settings.ShowCostInLore", true);
         getConfig().addDefault("Settings.ShowBalanceIcon", true);
         
+        if(getConfig().getConfigurationSection("Mobs") != null) {
+            for(Spawnable e : Spawnable.values()) {
+                getConfig().set("MobPrices." + e.getName(), getConfig().getDouble("Mobs." + e.getName()));
+            }
+            getConfig().set("Mobs", null);
+        }
+        
         for(Spawnable e : Spawnable.values()) {
-            getConfig().addDefault("Mobs." + e.getName(), 0.0);
+            getConfig().addDefault("MobPrices." + e.getName(), 0.0);
         }
         getConfig().options().copyDefaults(true);
         saveConfig();
@@ -79,32 +85,30 @@ public class SpawnerGUI extends JavaPlugin {
         int j = 0;
         
         for(Spawnable e : Spawnable.values()) {
-            if(j < 36) {
-                if(getConfig().getBoolean("Settings.RemoveNoAccessEggs") && noAccess(p, e)) continue;
-                
-                String defLore = "§7Set spawner type to: §a" + e.getName();
-                String cost = (getPrice(e) > 0.0 && !p.hasPermission("spawnergui.eco.bypass." + e.getName().toLowerCase()) && !p.hasPermission("spawnergui.eco.bypass.*")) ? "§a" + getPrice(e) : "§aFree";
-                String access = noAccess(p, e) ? "§7Access: §cNo" : "§7Access: §aYes";
-                
-                if(ecoEnabled && getConfig().getBoolean("Settings.ShowCostInLore")) {
-                    if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
-                        gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, "§7Cost: " + cost, access);
-                    } else {
-                        gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, "§7Cost: " + cost);
-                    }
+            if(getConfig().getBoolean("Settings.RemoveNoAccessEggs") && noAccess(p, e)) continue;
+
+            String defLore = "§7Set spawner type to: §a" + e.getName();
+            String cost = (getPrice(e) > 0.0 && !p.hasPermission("spawnergui.eco.bypass." + e.getName().toLowerCase()) && !p.hasPermission("spawnergui.eco.bypass.*")) ? "§a" + getPrice(e) : "§aFree";
+            String access = noAccess(p, e) ? "§7Access: §cNo" : "§7Access: §aYes";
+
+            if(eco != null && getConfig().getBoolean("Settings.ShowCostInLore")) {
+                if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, "§7Cost: " + cost, access);
                 } else {
-                    if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
-                        gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, access);
-                    } else {
-                        gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore);
-                    }
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, "§7Cost: " + cost);
                 }
-                j++;
+            } else {
+                if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, access);
+                } else {
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore);
+                }
             }
+            j++;
         }
         
         if(getConfig().getBoolean("Settings.ShowBalanceIcon")) {
-            String s = ecoEnabled ? "§aYour Balance: §e" + Math.round(eco.getBalance(p.getName()) * 100.0) / 100.0 : "§cEconomy not enabled!";
+            String s = eco != null ? "§aYour Balance: §e" + Math.round(eco.getBalance(p.getName()) * 100.0) / 100.0 : "§cEconomy not enabled!";
             gui.setItem(35, new ItemStack(Material.SKULL_ITEM, 1, (byte)3), "§bBalance", s);
         }
         gui.open(p);
@@ -112,7 +116,7 @@ public class SpawnerGUI extends JavaPlugin {
     }
     
     public double getPrice(Spawnable type) {
-        return getConfig().getDouble("Mobs." + type.getName());
+        return getConfig().getDouble("MobPrices." + type.getName());
     }
     
     public boolean noAccess(Player p, Spawnable type) {
@@ -186,7 +190,7 @@ public class SpawnerGUI extends JavaPlugin {
                         p.playSound(p.getLocation(), Sound.CLICK, 1, 1);
 
                         if(!noAccess(p, e)) {
-                            if(ecoEnabled && !p.hasPermission("spawnergui.eco.bypass.*")) {
+                            if(eco != null && !p.hasPermission("spawnergui.eco.bypass.*")) {
                                 double cost = p.hasPermission("spawnergui.eco.bypass." + clicked) ? 0.0 : getPrice(e);
 
                                 if(cost > 0.0) {

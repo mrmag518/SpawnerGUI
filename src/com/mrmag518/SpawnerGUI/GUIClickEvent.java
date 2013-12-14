@@ -4,7 +4,6 @@ import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 public class GUIClickEvent extends Event {
@@ -46,10 +45,6 @@ public class GUIClickEvent extends Event {
     
     @Override
     public HandlerList getHandlers() {
-        return handlers;
-    }
-    
-    public static HandlerList getHandlerList() {
         return handlers;
     }
 }
