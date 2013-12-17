@@ -1,14 +1,21 @@
 package com.mrmag518.SpawnerGUI;
 
+import com.sk89q.worldguard.LocalPlayer;
+import com.sk89q.worldguard.bukkit.BukkitPlayer;
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.sk89q.worldguard.protection.ApplicableRegionSet;
+import com.sk89q.worldguard.protection.managers.RegionManager;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.Bukkit;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
@@ -28,7 +35,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class SpawnerGUI extends JavaPlugin {
     private Economy eco = null;
-    public static final Set<String> openGUIs = new HashSet<String>();
+    private WorldGuardPlugin worldguard = null;
+    public static final Set<String> openGUIs = new HashSet<>();
     
     @Override
     public void onDisable() {
@@ -51,6 +59,11 @@ public class SpawnerGUI extends JavaPlugin {
             } else {
                 Logger.getLogger("Minecraft").log(Level.WARNING, "[SpawnerGUI] Found no Vault supported economy plugin! Disabled economy support.");
             }
+        }
+        
+        if(getServer().getPluginManager().getPlugin("WorldGuard") != null) {
+            worldguard = (WorldGuardPlugin)getServer().getPluginManager().getPlugin("WorldGuard");
+            Logger.getLogger("Minecraft").log(Level.INFO, "[SpawnerGUI] WorldGuard hooked.");
         }
         getServer().getPluginManager().registerEvents(new Handler(), this);
         Logger.getLogger("Minecraft").log(Level.INFO, "[SpawnerGUI] Version {0} enabled.", getDescription().getVersion());
@@ -123,13 +136,33 @@ public class SpawnerGUI extends JavaPlugin {
         return !p.hasPermission("spawnergui.edit.*") && !p.hasPermission("spawnergui.edit." + type.getName().toLowerCase());
     }
     
-    public static Spawnable toSpawnable(EntityType type) {
+    public Spawnable toSpawnable(EntityType type) {
         for(Spawnable e : Spawnable.values()) {
             if(e.getType() == type) {
                 return e;
             }
         }
         return null;
+    }
+    
+    private boolean canOpenAtLoc(Player p, Location loc) {
+        if(p.isOp()) {
+            return true;
+        }
+        
+        if(worldguard != null) {
+            RegionManager r = worldguard.getRegionManager(loc.getWorld());
+            
+            if(r != null) {
+                ApplicableRegionSet regions = r.getApplicableRegions(loc);
+                LocalPlayer lp = new BukkitPlayer(worldguard, p);
+                
+                if(!regions.isOwnerOfAll(lp) && !regions.isMemberOfAll(lp)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
     
     @Override
@@ -159,6 +192,11 @@ public class SpawnerGUI extends JavaPlugin {
                 Player p = event.getPlayer();
                 
                 if(b != null && b.getType() == Material.MOB_SPAWNER && p.hasPermission("spawnergui.open")) {
+                    if(!canOpenAtLoc(p, b.getLocation())) {
+                        p.sendMessage("§cYou are not allowed to edit this spawner!");
+                        return;
+                    }
+                    
                     if(getConfig().getBoolean("Settings.SneakToOpen") && p.isSneaking()) {
                         event.setCancelled(true);
                         openGUI((CreatureSpawner)b.getState(), p);
