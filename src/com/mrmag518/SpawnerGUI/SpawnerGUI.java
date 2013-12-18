@@ -99,16 +99,18 @@ public class SpawnerGUI extends JavaPlugin {
         
         for(Spawnable e : Spawnable.values()) {
             if(getConfig().getBoolean("Settings.RemoveNoAccessEggs") && noAccess(p, e)) continue;
-
-            String defLore = "§7Set spawner type to: §a" + e.getName();
-            String cost = (getPrice(e) > 0.0 && !p.hasPermission("spawnergui.eco.bypass." + e.getName().toLowerCase()) && !p.hasPermission("spawnergui.eco.bypass.*")) ? "§a" + getPrice(e) : "§aFree";
+            double cost = getPrice(e);
+            String defLore = "§7Set to: §a" + e.getName();
+            String price = cost > 0.0 ? "§e" + cost : "§aFree";
             String access = noAccess(p, e) ? "§7Access: §cNo" : "§7Access: §aYes";
-
+            
+            price += (p.hasPermission("spawnergui.eco.bypass." + e.getName().toLowerCase()) || p.hasPermission("spawnergui.eco.bypass.*")) && cost > 0.0 ? " §a§o(Free for you)" : "";
+            
             if(eco != null && getConfig().getBoolean("Settings.ShowCostInLore")) {
                 if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
-                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, "§7Cost: " + cost, access);
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, "§7Price: " + price, access);
                 } else {
-                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, "§7Cost: " + cost);
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, "§7Price: " + price);
                 }
             } else {
                 if(getConfig().getBoolean("Settings.ShowAccessInLore")) {

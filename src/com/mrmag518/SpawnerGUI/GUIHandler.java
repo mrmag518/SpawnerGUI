@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
@@ -38,7 +39,7 @@ public class GUIHandler implements Listener {
     
     public void open(Player player) {
         Inventory inv = Bukkit.createInventory(player, size, name);
-        
+            
         for(int i = 0; i < items.length; i++) {
             inv.setItem(i, items[i]);
         }
@@ -49,12 +50,18 @@ public class GUIHandler implements Listener {
     public void handleClick(InventoryClickEvent event) {
         if(event.getInventory().getName().equals(name)) {
             event.setCancelled(true);
-            int slot = event.getSlot();
-            GUIClickEvent e = new GUIClickEvent(slot, (Player)event.getWhoClicked(), spawner);
-            Bukkit.getPluginManager().callEvent(e);
             
-            if(e.willClose()) {
-                event.getWhoClicked().getOpenInventory().close();
+            if(event.getClick() == ClickType.LEFT || event.getClick() == ClickType.RIGHT) {
+                int slot = event.getRawSlot();
+                
+                if(slot > 0 && slot < size && items[slot] != null) {
+                    GUIClickEvent e = new GUIClickEvent(slot, (Player)event.getWhoClicked(), spawner);
+                    Bukkit.getPluginManager().callEvent(e);
+
+                    if(e.willClose()) {
+                        event.getWhoClicked().getOpenInventory().close();
+                    }
+                }
             }
         }
     }
