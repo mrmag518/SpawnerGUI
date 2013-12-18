@@ -5,6 +5,7 @@ import com.sk89q.worldguard.bukkit.BukkitPlayer;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -40,11 +41,7 @@ public class SpawnerGUI extends JavaPlugin {
     
     @Override
     public void onDisable() {
-        for(String s : openGUIs) {
-            if(Bukkit.getOfflinePlayer(s).isOnline()) {
-                Bukkit.getPlayerExact(s).getOpenInventory().close();
-            }
-        }
+        eatGUIs();
         Logger.getLogger("Minecraft").log(Level.INFO, "[SpawnerGUI] Version {0} disabled.", getDescription().getVersion());
     }
     
@@ -147,12 +144,16 @@ public class SpawnerGUI extends JavaPlugin {
         return null;
     }
     
-    private boolean canOpenAtLoc(Player p, Location loc) {
-        if(p.isOp()) {
-            return true;
+    public void eatGUIs() {
+        for(String s : openGUIs) {
+            if(Bukkit.getOfflinePlayer(s).isOnline()) {
+                Bukkit.getPlayerExact(s).getOpenInventory().close();
+            }
         }
-        
-        if(worldguard != null) {
+    }
+    
+    private boolean canOpenAtLoc(Player p, Location loc) {
+        if(worldguard != null && !p.isOp()) {
             RegionManager r = worldguard.getRegionManager(loc.getWorld());
             
             if(r != null) {
@@ -173,13 +174,15 @@ public class SpawnerGUI extends JavaPlugin {
             if(sender instanceof Player) {
                 if(sender.hasPermission("spawnergui.command.reload")) {
                     reloadConfig();
-                    sender.sendMessage("§aConfiguration file reloaded.");
+                    eatGUIs();
+                    sender.sendMessage("§aSpawnerGUI reloaded.");
                 } else {
                     sender.sendMessage("§cYou do not have permission to do this!");
                 }
             } else {
                 reloadConfig();
-                sender.sendMessage("Configuration file reloaded.");
+                eatGUIs();
+                sender.sendMessage("SpawnerGUI reloaded.");
             }
             return true;
         }

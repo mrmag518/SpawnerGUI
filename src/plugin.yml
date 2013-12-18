@@ -6,7 +6,7 @@ description: "Simple & easy spawner modification GUI."
 softdepend: [Vault, WorldGuard]
 commands:
   spawnergui:
-    description: Main command for SpawnerGUI.
+    description: Reload SpawnerGUI.
     usage: /<command>
 permissions:
   spawnergui.open:

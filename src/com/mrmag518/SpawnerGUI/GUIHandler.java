@@ -57,7 +57,7 @@ public class GUIHandler implements Listener {
                 if(slot > 0 && slot < size && items[slot] != null) {
                     GUIClickEvent e = new GUIClickEvent(slot, (Player)event.getWhoClicked(), spawner);
                     Bukkit.getPluginManager().callEvent(e);
-
+                    
                     if(e.willClose()) {
                         event.getWhoClicked().getOpenInventory().close();
                     }
