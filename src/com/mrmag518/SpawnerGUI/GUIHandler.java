@@ -54,7 +54,7 @@ public class GUIHandler implements Listener {
             if(event.getClick() == ClickType.LEFT || event.getClick() == ClickType.RIGHT) {
                 int slot = event.getRawSlot();
                 
-                if(slot > 0 && slot < size && items[slot] != null) {
+                if(slot >= 0 && slot < size && items[slot] != null) {
                     GUIClickEvent e = new GUIClickEvent(slot, (Player)event.getWhoClicked(), spawner);
                     Bukkit.getPluginManager().callEvent(e);
                     

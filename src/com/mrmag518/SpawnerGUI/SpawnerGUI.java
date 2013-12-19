@@ -5,7 +5,6 @@ import com.sk89q.worldguard.bukkit.BukkitPlayer;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -90,37 +89,37 @@ public class SpawnerGUI extends JavaPlugin {
     }
     
     public void openGUI(CreatureSpawner spawner, Player p) {
-        Spawnable type = toSpawnable(spawner.getSpawnedType());
+        Spawnable type = Spawnable.from(spawner.getSpawnedType());
         GUIHandler gui = new GUIHandler("Spawner Type: " + type.getName(), 36, spawner);
         int j = 0;
         
         for(Spawnable e : Spawnable.values()) {
             if(getConfig().getBoolean("Settings.RemoveNoAccessEggs") && noAccess(p, e)) continue;
-            double cost = getPrice(e);
-            String defLore = "§7Set to: §a" + e.getName();
-            String price = cost > 0.0 ? "§e" + cost : "§aFree";
-            String access = noAccess(p, e) ? "§7Access: §cNo" : "§7Access: §aYes";
+            double price = getPrice(e);
+            String editLine = "§7Set to: §a" + e.getName();
+            String priceLine = price > 0.0 ? "§e" + price : "§aFree";
+            String accessLine = noAccess(p, e) ? "§7Access: §cNo" : "§7Access: §aYes";
             
-            price += (p.hasPermission("spawnergui.eco.bypass." + e.getName().toLowerCase()) || p.hasPermission("spawnergui.eco.bypass.*")) && cost > 0.0 ? " §a§o(Free for you)" : "";
+            priceLine += (p.hasPermission("spawnergui.eco.bypass." + e.getName().toLowerCase()) || p.hasPermission("spawnergui.eco.bypass.*")) && price > 0.0 ? " §a§o(Free for you)" : "";
             
             if(eco != null && getConfig().getBoolean("Settings.ShowCostInLore")) {
                 if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
-                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, "§7Price: " + price, access);
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), editLine, "§7Price: " + priceLine, accessLine);
                 } else {
-                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, "§7Price: " + price);
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), editLine, "§7Price: " + priceLine);
                 }
             } else {
                 if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
-                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore, access);
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), editLine, accessLine);
                 } else {
-                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), defLore);
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), editLine);
                 }
             }
             j++;
         }
         
         if(getConfig().getBoolean("Settings.ShowBalanceIcon")) {
-            String s = eco != null ? "§aYour Balance: §e" + Math.round(eco.getBalance(p.getName()) * 100.0) / 100.0 : "§cEconomy not enabled!";
+            String s = eco != null ? "§aYour Balance: §e" + Math.round(eco.getBalance(p.getName()) * 100.0) / 100.0 : "§cEconomy is not enabled!";
             gui.setItem(35, new ItemStack(Material.SKULL_ITEM, 1, (byte)3), "§bBalance", s);
         }
         gui.open(p);
@@ -135,19 +134,11 @@ public class SpawnerGUI extends JavaPlugin {
         return !p.hasPermission("spawnergui.edit.*") && !p.hasPermission("spawnergui.edit." + type.getName().toLowerCase());
     }
     
-    public Spawnable toSpawnable(EntityType type) {
-        for(Spawnable e : Spawnable.values()) {
-            if(e.getType() == type) {
-                return e;
-            }
-        }
-        return null;
-    }
-    
     public void eatGUIs() {
         for(String s : openGUIs) {
             if(Bukkit.getOfflinePlayer(s).isOnline()) {
                 Bukkit.getPlayerExact(s).getOpenInventory().close();
+                Bukkit.getPlayerExact(s).sendMessage("§cThe GUI was forced to close due to a reload.");
             }
         }
     }
@@ -197,16 +188,16 @@ public class SpawnerGUI extends JavaPlugin {
                 Player p = event.getPlayer();
                 
                 if(b != null && b.getType() == Material.MOB_SPAWNER && p.hasPermission("spawnergui.open")) {
+                    event.setCancelled(true);
+                    
                     if(!canOpenAtLoc(p, b.getLocation())) {
                         p.sendMessage("§cYou are not allowed to edit this spawner!");
                         return;
                     }
                     
                     if(getConfig().getBoolean("Settings.SneakToOpen") && p.isSneaking()) {
-                        event.setCancelled(true);
                         openGUI((CreatureSpawner)b.getState(), p);
                     } else if(getConfig().getBoolean("Settings.SneakToOpen") == false && !p.isSneaking()) {
-                        event.setCancelled(true);
                         openGUI((CreatureSpawner)b.getState(), p);
                     }
                 }
@@ -223,7 +214,7 @@ public class SpawnerGUI extends JavaPlugin {
                 return;
             }
             String clicked = ChatColor.stripColor(event.getItem().getItemMeta().getDisplayName().toLowerCase());
-            Spawnable current = toSpawnable(spawner.getSpawnedType());
+            Spawnable current = Spawnable.from(spawner.getSpawnedType());
 
             if(clicked.equalsIgnoreCase("balance")) {
                 event.setWillClose(false);
@@ -234,14 +225,14 @@ public class SpawnerGUI extends JavaPlugin {
 
                         if(!noAccess(p, e)) {
                             if(eco != null && !p.hasPermission("spawnergui.eco.bypass.*")) {
-                                double cost = p.hasPermission("spawnergui.eco.bypass." + clicked) ? 0.0 : getPrice(e);
+                                double price = p.hasPermission("spawnergui.eco.bypass." + clicked) ? 0.0 : getPrice(e);
 
-                                if(cost > 0.0) {
-                                    if(eco.has(p.getName(), cost)) {
-                                        p.sendMessage("§7Charged §f" + cost + " §7of your balance.");
-                                        eco.withdrawPlayer(p.getName(), cost);
+                                if(price > 0.0) {
+                                    if(eco.has(p.getName(), price)) {
+                                        p.sendMessage("§7Charged §f" + price + " §7of your balance.");
+                                        eco.withdrawPlayer(p.getName(), price);
                                     } else {
-                                        p.sendMessage("§cYou need at least §7" + cost + " §cin balance to do this!");
+                                        p.sendMessage("§cYou need at least §7" + price + " §cin balance to do this!");
                                         return;
                                     }
                                 }
@@ -314,6 +305,15 @@ public class SpawnerGUI extends JavaPlugin {
         
         public ItemStack getSpawnEgg() {
             return new ItemStack(Material.MONSTER_EGG, 1, data);
+        }
+        
+        public static Spawnable from(EntityType type) {
+            for(Spawnable e : values()) {
+                if(e.getType() == type) {
+                    return e;
+                }
+            }
+            return null;
         }
     }
 }
