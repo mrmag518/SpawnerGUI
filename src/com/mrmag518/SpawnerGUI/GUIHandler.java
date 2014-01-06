@@ -51,16 +51,14 @@ public class GUIHandler implements Listener {
         if(event.getInventory().getName().equals(name)) {
             event.setCancelled(true);
             
-            if(event.getClick() == ClickType.LEFT || event.getClick() == ClickType.RIGHT) {
-                int slot = event.getRawSlot();
-                
-                if(slot >= 0 && slot < size && items[slot] != null) {
-                    GUIClickEvent e = new GUIClickEvent(slot, (Player)event.getWhoClicked(), spawner);
-                    Bukkit.getPluginManager().callEvent(e);
-                    
-                    if(e.willClose()) {
-                        event.getWhoClicked().getOpenInventory().close();
-                    }
+            int slot = event.getRawSlot();
+
+            if(slot >= 0 && slot < size && items[slot] != null) {
+                GUIClickEvent e = new GUIClickEvent(slot, (Player)event.getWhoClicked(), spawner);
+                Bukkit.getPluginManager().callEvent(e);
+
+                if(e.willClose()) {
+                    event.getWhoClicked().getOpenInventory().close();
                 }
             }
         }
