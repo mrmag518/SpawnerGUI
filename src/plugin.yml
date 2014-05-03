@@ -1,6 +1,6 @@
 author: mrmag518
-main: com.mrmag518.SpawnerGUI.SpawnerGUI
-version: '1.8'
+main: com.mrmag518.SpawnerGUI.Main
+version: '1.9'
 name: SpawnerGUI
 description: "Simple & easy spawner modification GUI."
 softdepend: [Vault, WorldGuard]
@@ -14,6 +14,6 @@ permissions:
   spawnergui.eco.bypass.*:
     default: op
   spawnergui.edit.*:
-    default: false
+    default: op
   spawnergui.command.reload:
     default: op
