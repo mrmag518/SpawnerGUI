@@ -152,10 +152,7 @@ public class Main extends JavaPlugin {
             if(r != null) {
                 ApplicableRegionSet regions = r.getApplicableRegions(loc);
                 LocalPlayer lp = new BukkitPlayer(worldguard, p);
-                
-                if(!regions.isOwnerOfAll(lp) && !regions.isMemberOfAll(lp)) {
-                    return false;
-                }
+                return regions.canBuild(lp);
             }
         }
         return true;
@@ -193,7 +190,7 @@ public class Main extends JavaPlugin {
                     event.setCancelled(true);
                     
                     if(!canOpenAtLoc(p, b.getLocation())) {
-                        p.sendMessage("§cYou are not allowed to edit this spawner!");
+                        p.sendMessage("§cThat spawner is protected and cannot be edited by you.");
                         return;
                     }
                     
