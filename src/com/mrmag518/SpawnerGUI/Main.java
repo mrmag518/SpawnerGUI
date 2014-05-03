@@ -205,6 +205,8 @@ public class Main extends JavaPlugin {
         
         @EventHandler
         public void handleClick(GUIClickEvent event) {
+            if(event.getItem() == null | event.getSpawner() == null) return;
+            
             Player p = event.getPlayer();
             CreatureSpawner spawner = event.getSpawner();
             

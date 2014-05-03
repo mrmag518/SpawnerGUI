@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import org.bukkit.Bukkit;
 import org.bukkit.block.CreatureSpawner;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
@@ -65,13 +66,14 @@ public class GUIHandler implements Listener {
     
     @EventHandler
     public void handleClose(InventoryCloseEvent event) {
-        Inventory inv = event.getInventory();
+        HumanEntity p = event.getPlayer();
+        Inventory inv = p.getInventory();
         
         if(inv.getName().equals(name)) {
             eat();
             
-            if(Main.openGUIs.contains(event.getPlayer().getName())) {
-                Main.openGUIs.remove(event.getPlayer().getName());
+            if(Main.openGUIs.contains(p.getName())) {
+                Main.openGUIs.remove(p.getName());
             }
         }
     }
