@@ -75,7 +75,7 @@ public class Main extends JavaPlugin {
         
         getConfig().addDefault("Protection.WorldGuard", getServer().getPluginManager().getPlugin("WorldGuard") != null);
         
-        getConfig().addDefault("PersonalSpawners.Enabled", false);
+        /*getConfig().addDefault("PersonalSpawners.Enabled", false);
         getConfig().addDefault("PersonalSpawners.MaxProtections", 0);
         getConfig().addDefault("PersonalSpawners.ProtectWhen.SpawnerPlaced", true);
         getConfig().addDefault("PersonalSpawners.ProtectWhen.FirstOpen", false);
@@ -83,7 +83,7 @@ public class Main extends JavaPlugin {
         //getConfig().addDefault("PersonalSpawners.Economy.TradeEnabled", false); ?
         getConfig().addDefault("PersonalSpawners.Database.RemoveInactivePlayers", true);
         getConfig().addDefault("PersonalSpawners.Database.RemoveSpawner", false);
-        getConfig().addDefault("PersonalSpawners.Database.InactiveDays", 60);
+        getConfig().addDefault("PersonalSpawners.Database.InactiveDays", 60);*/
         
         if(getConfig().getConfigurationSection("Mobs") != null) {
             for(Spawnable e : Spawnable.values()) {
@@ -107,6 +107,7 @@ public class Main extends JavaPlugin {
         for(Spawnable e : Spawnable.values()) {
             if(getConfig().getBoolean("Settings.RemoveNoAccessEggs") && noAccess(p, e)) continue;
             double price = getPrice(e);
+            String editLine = "§7Set to: §a" + e.getName();
             String priceLine = price > 0.0 ? "§e" + price : "§aFree";
             String accessLine = noAccess(p, e) ? "§7Access: §cNo" : "§7Access: §aYes";
             
@@ -114,15 +115,15 @@ public class Main extends JavaPlugin {
             
             if(eco != null && getConfig().getBoolean("Settings.ShowCostInLore")) {
                 if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
-                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), "§7Price: " + priceLine, accessLine);
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), editLine, "§7Price: " + priceLine, accessLine);
                 } else {
-                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), "§7Price: " + priceLine);
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), editLine, "§7Price: " + priceLine);
                 }
             } else {
                 if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
-                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), accessLine);
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), editLine, accessLine);
                 } else {
-                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName());
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), editLine);
                 }
             }
             j++;
@@ -213,8 +214,6 @@ public class Main extends JavaPlugin {
         
         @EventHandler
         public void handleClick(GUIClickEvent event) {
-            if(event.getItem() == null | event.getSpawner() == null) return;
-            
             Player p = event.getPlayer();
             CreatureSpawner spawner = event.getSpawner();
             

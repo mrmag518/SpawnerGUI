@@ -67,7 +67,7 @@ public class GUIHandler implements Listener {
     @EventHandler
     public void handleClose(InventoryCloseEvent event) {
         HumanEntity p = event.getPlayer();
-        Inventory inv = p.getInventory();
+        Inventory inv = event.getInventory();
         
         if(inv.getName().equals(name)) {
             eat();
