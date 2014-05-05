@@ -1,4 +1,4 @@
-package com.mrmag518.SpawnerGUI;
+package com.mrmag518.spawnergui;
 
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.Player;

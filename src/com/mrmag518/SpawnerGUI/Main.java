@@ -1,4 +1,4 @@
-package com.mrmag518.SpawnerGUI;
+package com.mrmag518.spawnergui;
 
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.bukkit.BukkitPlayer;
@@ -22,7 +22,6 @@ import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -76,6 +75,16 @@ public class Main extends JavaPlugin {
         
         getConfig().addDefault("Protection.WorldGuard", getServer().getPluginManager().getPlugin("WorldGuard") != null);
         
+        getConfig().addDefault("PersonalSpawners.Enabled", false);
+        getConfig().addDefault("PersonalSpawners.MaxProtections", 0);
+        getConfig().addDefault("PersonalSpawners.ProtectWhen.SpawnerPlaced", true);
+        getConfig().addDefault("PersonalSpawners.ProtectWhen.FirstOpen", false);
+        getConfig().addDefault("PersonalSpawners.ProtectWhen.FirstChange", true);
+        //getConfig().addDefault("PersonalSpawners.Economy.TradeEnabled", false); ?
+        getConfig().addDefault("PersonalSpawners.Database.RemoveInactivePlayers", true);
+        getConfig().addDefault("PersonalSpawners.Database.RemoveSpawner", false);
+        getConfig().addDefault("PersonalSpawners.Database.InactiveDays", 60);
+        
         if(getConfig().getConfigurationSection("Mobs") != null) {
             for(Spawnable e : Spawnable.values()) {
                 getConfig().set("MobPrices." + e.getName(), getConfig().getDouble("Mobs." + e.getName()));
@@ -98,7 +107,6 @@ public class Main extends JavaPlugin {
         for(Spawnable e : Spawnable.values()) {
             if(getConfig().getBoolean("Settings.RemoveNoAccessEggs") && noAccess(p, e)) continue;
             double price = getPrice(e);
-            String editLine = "§7Set to: §a" + e.getName();
             String priceLine = price > 0.0 ? "§e" + price : "§aFree";
             String accessLine = noAccess(p, e) ? "§7Access: §cNo" : "§7Access: §aYes";
             
@@ -106,15 +114,15 @@ public class Main extends JavaPlugin {
             
             if(eco != null && getConfig().getBoolean("Settings.ShowCostInLore")) {
                 if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
-                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), editLine, "§7Price: " + priceLine, accessLine);
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), "§7Price: " + priceLine, accessLine);
                 } else {
-                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), editLine, "§7Price: " + priceLine);
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), "§7Price: " + priceLine);
                 }
             } else {
                 if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
-                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), editLine, accessLine);
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), accessLine);
                 } else {
-                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), editLine);
+                    gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName());
                 }
             }
             j++;
@@ -137,10 +145,10 @@ public class Main extends JavaPlugin {
     }
     
     public void eatGUIs() {
-        for(String s : openGUIs) {
-            if(Bukkit.getOfflinePlayer(s).isOnline()) {
-                Bukkit.getPlayerExact(s).getOpenInventory().close();
-                Bukkit.getPlayerExact(s).sendMessage("§cThe GUI was forced to close due to a reload.");
+        for(Player p : Bukkit.getOnlinePlayers()) {
+            if(openGUIs.contains(p.getName())) {
+                p.getOpenInventory().close();
+                p.sendMessage("§cThe GUI was forced to close due to a reload.");
             }
         }
     }
@@ -216,7 +224,7 @@ public class Main extends JavaPlugin {
             }
             String clicked = ChatColor.stripColor(event.getItem().getItemMeta().getDisplayName().toLowerCase());
             Spawnable current = Spawnable.from(spawner.getSpawnedType());
-
+            
             if(clicked.equalsIgnoreCase("balance")) {
                 event.setWillClose(false);
             } else {
@@ -248,73 +256,6 @@ public class Main extends JavaPlugin {
                     }
                 }
             }
-        }
-    }
-    
-    public enum Spawnable {
-        CREEPER(EntityType.CREEPER, "Creeper", (byte)50),
-        SKELETON(EntityType.SKELETON, "Skeleton", (byte)51),
-        SPIDER(EntityType.SPIDER, "Spider", (byte)52),
-        GIANT(EntityType.GIANT, "Giant", (byte)53),
-        ZOMBIE(EntityType.ZOMBIE, "Zombie", (byte)54),
-        SLIME(EntityType.SLIME, "Slime", (byte)55),
-        GHAST(EntityType.GHAST, "Ghast", (byte)56),
-        PIG_ZOMBIE(EntityType.PIG_ZOMBIE, "PigZombie", (byte)57),
-        ENDERMAN(EntityType.ENDERMAN, "Enderman", (byte)58),
-        CAVE_SPIDER(EntityType.CAVE_SPIDER, "CaveSpider", (byte)59),
-        SILVERFISH(EntityType.SILVERFISH, "Silverfish", (byte)60),
-        BLAZE(EntityType.BLAZE, "Blaze", (byte)61),
-        MAGMA_CUBE(EntityType.MAGMA_CUBE, "MagmaCube", (byte)62),
-        ENDER_DRAGON(EntityType.ENDER_DRAGON, "EnderDragon", (byte)63),
-        WITHER(EntityType.WITHER, "Wither", (byte)64),
-        BAT(EntityType.BAT, "Bat", (byte)65),
-        WITCH(EntityType.WITCH, "Witch", (byte)66),
-        PIG(EntityType.PIG, "Pig", (byte)90),
-        SHEEP(EntityType.SHEEP, "Sheep", (byte)91),
-        COW(EntityType.COW, "Cow", (byte)92),
-        CHICKEN(EntityType.CHICKEN, "Chicken", (byte)93),
-        SQUID(EntityType.SQUID, "Squid", (byte)94),
-        WOLF(EntityType.WOLF, "Wolf", (byte)95),
-        MUSHROOM_COW(EntityType.MUSHROOM_COW, "Mooshroom", (byte)96),
-        SNOWMAN(EntityType.SNOWMAN, "SnowGolem", (byte)97),
-        OCELOT(EntityType.OCELOT, "Ocelot", (byte)98),
-        IRON_GOLEM(EntityType.IRON_GOLEM, "IronGolem", (byte)99),
-        HORSE(EntityType.HORSE, "Horse", (byte)100),
-        VILLAGER(EntityType.VILLAGER, "Villager", (byte)120);
-        
-        private final EntityType type;
-        private final String name;
-        private final byte data;
-        
-        private Spawnable(EntityType type, String name, byte data) {
-            this.type = type;
-            this.name = name;
-            this.data = data;
-        }
-        
-        public String getName() {
-            return name;
-        }
-        
-        public byte getData() {
-            return data;
-        }
-        
-        public EntityType getType() {
-            return type;
-        }
-        
-        public ItemStack getSpawnEgg() {
-            return new ItemStack(Material.MONSTER_EGG, 1, data);
-        }
-        
-        public static Spawnable from(EntityType type) {
-            for(Spawnable e : values()) {
-                if(e.getType() == type) {
-                    return e;
-                }
-            }
-            return null;
         }
     }
 }

@@ -1,6 +1,6 @@
 author: mrmag518
-main: com.mrmag518.SpawnerGUI.Main
-version: '1.9'
+main: com.mrmag518.spawnergui.Main
+version: '2.0'
 name: SpawnerGUI
 description: "Simple & easy spawner modification GUI."
 softdepend: [Vault, WorldGuard]
