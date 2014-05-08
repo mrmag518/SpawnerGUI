@@ -1,5 +1,8 @@
 package com.mrmag518.spawnergui;
 
+import com.mrmag518.spawnergui.files.Config;
+import com.mrmag518.spawnergui.files.Database;
+
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.bukkit.BukkitPlayer;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
@@ -36,16 +39,20 @@ public class Main extends JavaPlugin {
     private Economy eco = null;
     private WorldGuardPlugin worldguard = null;
     public static final Set<String> openGUIs = new HashSet<>();
+    public static Main instance = null;
     
     @Override
     public void onDisable() {
         eatGUIs();
-        Logger.getLogger("Minecraft").log(Level.INFO, "[SpawnerGUI] Version {0} disabled.", getDescription().getVersion());
+        Log.info("Version " + getDescription().getVersion() + " disabled.");
     }
     
     @Override
     public void onEnable() {
-        loadConfig();
+        instance = this;
+        if(!getDataFolder().exists()) getDataFolder().mkdir();
+        Config.init();
+        Database.init();
         
         if(getServer().getPluginManager().getPlugin("Vault") != null) {
             RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
@@ -56,47 +63,12 @@ public class Main extends JavaPlugin {
             }
         }
         
-        if(getServer().getPluginManager().getPlugin("WorldGuard") != null && getConfig().getBoolean("Protection.WorldGuard")) {
+        if(getServer().getPluginManager().getPlugin("WorldGuard") != null && Config.getConfig().getBoolean("Protection.WorldGuard")) {
             worldguard = (WorldGuardPlugin)getServer().getPluginManager().getPlugin("WorldGuard");
             Logger.getLogger("Minecraft").log(Level.INFO, "[SpawnerGUI] WorldGuard hooked.");
         }
         getServer().getPluginManager().registerEvents(new Handler(), this);
-        Logger.getLogger("Minecraft").log(Level.INFO, "[SpawnerGUI] Version {0} enabled.", getDescription().getVersion());
-    }
-    
-    private void loadConfig() {
-        if(!getDataFolder().exists()) getDataFolder().mkdir();
-        
-        getConfig().addDefault("Settings.SneakToOpen", false);
-        getConfig().addDefault("Settings.RemoveNoAccessEggs", false);
-        getConfig().addDefault("Settings.ShowAccessInLore", true);
-        getConfig().addDefault("Settings.ShowCostInLore", true);
-        getConfig().addDefault("Settings.ShowBalanceIcon", true);
-        
-        getConfig().addDefault("Protection.WorldGuard", getServer().getPluginManager().getPlugin("WorldGuard") != null);
-        
-        getConfig().addDefault("PersonalSpawners.Enabled", false);
-        getConfig().addDefault("PersonalSpawners.MaxProtections", 0);
-        getConfig().addDefault("PersonalSpawners.ProtectWhen.SpawnerPlaced", true);
-        getConfig().addDefault("PersonalSpawners.ProtectWhen.FirstOpen", false);
-        getConfig().addDefault("PersonalSpawners.ProtectWhen.FirstChange", true);
-        //getConfig().addDefault("PersonalSpawners.Economy.TradeEnabled", false); ?
-        getConfig().addDefault("PersonalSpawners.Database.RemoveInactivePlayers", true);
-        getConfig().addDefault("PersonalSpawners.Database.RemoveSpawner", false);
-        getConfig().addDefault("PersonalSpawners.Database.InactiveDays", 60);
-        
-        if(getConfig().getConfigurationSection("Mobs") != null) {
-            for(Spawnable e : Spawnable.values()) {
-                getConfig().set("MobPrices." + e.getName(), getConfig().getDouble("Mobs." + e.getName()));
-            }
-            getConfig().set("Mobs", null);
-        }
-        
-        for(Spawnable e : Spawnable.values()) {
-            getConfig().addDefault("MobPrices." + e.getName(), 0.0);
-        }
-        getConfig().options().copyDefaults(true);
-        saveConfig();
+        Log.info("Version " + getDescription().getVersion() + " enabled.");
     }
     
     public void openGUI(CreatureSpawner spawner, Player p) {
@@ -105,21 +77,21 @@ public class Main extends JavaPlugin {
         int j = 0;
         
         for(Spawnable e : Spawnable.values()) {
-            if(getConfig().getBoolean("Settings.RemoveNoAccessEggs") && noAccess(p, e)) continue;
+            if(Config.getConfig().getBoolean("Settings.RemoveNoAccessEggs") && noAccess(p, e)) continue;
             double price = getPrice(e);
             String priceLine = price > 0.0 ? "§e" + price : "§aFree";
             String accessLine = noAccess(p, e) ? "§7Access: §cNo" : "§7Access: §aYes";
             
             priceLine += (p.hasPermission("spawnergui.eco.bypass." + e.getName().toLowerCase()) || p.hasPermission("spawnergui.eco.bypass.*")) && price > 0.0 ? " §a§o(Free for you)" : "";
             
-            if(eco != null && getConfig().getBoolean("Settings.ShowCostInLore")) {
-                if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
+            if(eco != null && Config.getConfig().getBoolean("Settings.ShowCostInLore")) {
+                if(Config.getConfig().getBoolean("Settings.ShowAccessInLore")) {
                     gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), "§7Price: " + priceLine, accessLine);
                 } else {
                     gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), "§7Price: " + priceLine);
                 }
             } else {
-                if(getConfig().getBoolean("Settings.ShowAccessInLore")) {
+                if(Config.getConfig().getBoolean("Settings.ShowAccessInLore")) {
                     gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName(), accessLine);
                 } else {
                     gui.setItem(j, e.getSpawnEgg(), "§6" + e.getName());
@@ -128,7 +100,7 @@ public class Main extends JavaPlugin {
             j++;
         }
         
-        if(getConfig().getBoolean("Settings.ShowBalanceIcon")) {
+        if(Config.getConfig().getBoolean("Settings.ShowBalanceIcon")) {
             String s = eco != null ? "§aYour Balance: §e" + Math.round(eco.getBalance(p.getName()) * 100.0) / 100.0 : "§cEconomy is not enabled!";
             gui.setItem(35, new ItemStack(Material.SKULL_ITEM, 1, (byte)3), "§bBalance", s);
         }
@@ -137,7 +109,7 @@ public class Main extends JavaPlugin {
     }
     
     public double getPrice(Spawnable type) {
-        return getConfig().getDouble("MobPrices." + type.getName());
+        return Config.getConfig().getDouble("MobPrices." + type.getName());
     }
     
     public boolean noAccess(Player p, Spawnable type) {
@@ -202,9 +174,9 @@ public class Main extends JavaPlugin {
                         return;
                     }
                     
-                    if(getConfig().getBoolean("Settings.SneakToOpen") && p.isSneaking()) {
+                    if(Config.getConfig().getBoolean("Settings.SneakToOpen") && p.isSneaking()) {
                         openGUI((CreatureSpawner)b.getState(), p);
-                    } else if(getConfig().getBoolean("Settings.SneakToOpen") == false && !p.isSneaking()) {
+                    } else if(Config.getConfig().getBoolean("Settings.SneakToOpen") == false && !p.isSneaking()) {
                         openGUI((CreatureSpawner)b.getState(), p);
                     }
                 }
